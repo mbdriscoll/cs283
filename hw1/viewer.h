@@ -8,3 +8,8 @@
     #endif
     #include <GL/glut.h>
 #endif
+
+#include "glm/glm.hpp"
+
+#include <boost/foreach.hpp>
+#define foreach BOOST_FOREACH

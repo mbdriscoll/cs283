@@ -6,10 +6,10 @@
 #include <fstream>
 #include <sstream>
 
-#include "Model.h"
+#include "Object.h"
 #include "extra/gl_hud.h"
 
-Model* g_model = NULL;
+Object *g_model = NULL;
 
 int   g_frame = 0,
       g_repeatCount = 0;
@@ -83,7 +83,7 @@ initializeShape(const char* input_filename) {
         exit(2);
     }
 
-    g_model = new Model(input_file);
+    g_model = new Object(input_file);
     g_model->SetCenterSize((float*) &g_center, &g_size);
 
     fclose(input_file);

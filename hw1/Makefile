@@ -2,7 +2,7 @@ CXX = c++
 CC = c++
 
 OBJECTS = \
-		  Model.o \
+		  Object.o \
 		  extra/hud.o \
 		  extra/gl_hud.o \
 		  viewer.o
