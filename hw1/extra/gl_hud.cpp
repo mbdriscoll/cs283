@@ -131,8 +131,9 @@ GLhud::Rebuild(int width, int height)
         }
     }
 
-    drawString(vboSource, GetWidth()-80, GetHeight()-48, .5, .5, .5, "\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f");
-    drawString(vboSource, GetWidth()-80, GetHeight()-32, .5, .5, .5, "\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f");
+    // OpenSubdiv Logo
+    //drawString(vboSource, GetWidth()-80, GetHeight()-48, .5, .5, .5, "\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f");
+    //drawString(vboSource, GetWidth()-80, GetHeight()-32, .5, .5, .5, "\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f");
 
     _staticVboSize = (int)vboSource.size();
     glBindBuffer(GL_ARRAY_BUFFER, _staticVbo);

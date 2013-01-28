@@ -164,17 +164,7 @@ display() {
     glFinish();
 
     if (g_hud.IsVisible()) {
-#if 0
-        g_hud.DrawString(10, -180, "Tess level : %d", g_tessLevel);
-        g_hud.DrawString(10, -160, "Primitives : %d", numPrimsGenerated);
-        g_hud.DrawString(10, -140, "Vertices   : %d", g_mesh->GetNumVertices());
-        g_hud.DrawString(10, -120, "Scheme     : %s", g_scheme==kBilinear ? "BILINEAR" : (g_scheme == kLoop ? "LOOP" : "CATMARK"));
-        g_hud.DrawString(10, -100, "GPU Kernel : %.3f ms", g_gpuTime);
-        g_hud.DrawString(10, -80,  "CPU Kernel : %.3f ms", g_cpuTime);
-        g_hud.DrawString(10, -60,  "GPU Draw   : %.3f ms", drawGpuTime);
-        g_hud.DrawString(10, -40,  "CPU Draw   : %.3f ms", drawCpuTime);
-        g_hud.DrawString(10, -20,  "FPS        : %3.1f", fps);
-#endif
+        g_hud.DrawString(10, -20,  "Tess level : %d", 1337);
     }
 
     g_hud.Flush();
@@ -299,8 +289,8 @@ initHUD()
 {
     g_hud.Init(g_width, g_height);
 
-    g_hud.AddCheckBox("Show normal vector (E)", false, 350, 70, callbackDisplayNormal, 0, 'e');
-    g_hud.AddCheckBox("Freeze (spc)", false, 350, 130, callbackFreeze, 0, ' ');
+    g_hud.AddCheckBox("Show normal vector (E)", false, 10, 10, callbackDisplayNormal, 0, 'e');
+    g_hud.AddCheckBox("Freeze (spc)", false, 10, 30, callbackFreeze, 0, ' ');
 }
 
 //------------------------------------------------------------------------------
