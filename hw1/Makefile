@@ -1,7 +1,12 @@
 CXX = c++
 CC = c++
 
-OBJECTS = extra/hud.o extra/gl_hud.o viewer.o
+OBJECTS = \
+		  Model.o \
+		  extra/hud.o \
+		  extra/gl_hud.o \
+		  viewer.o
+
 CXXFLAGS = -I/opt/local/include
 LDFLAGS = -framework GLUT -framework OpenGL -L/opt/local/lib -lGLEW
 default: viewer

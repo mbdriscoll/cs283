@@ -18,9 +18,10 @@
 #include <fstream>
 #include <sstream>
 
+#include "Model.h"
 #include "extra/gl_hud.h"
 
-int g_currentShape = 0;
+Model* g_model = NULL;
 
 int   g_frame = 0,
       g_repeatCount = 0;
@@ -85,7 +86,18 @@ checkGLErrors(std::string const & where = "")
 
 //------------------------------------------------------------------------------
 static void
-initializeShapes( ) {
+initializeShape(const char* input_filename) {
+    printf("Reading object in file %s.\n", input_filename);
+
+    FILE* input_file = fopen(input_filename, "r");
+    if (input_file == NULL) {
+        printf("Could not open model at %s.\n", input_filename);
+        exit(2);
+    }
+
+    g_model = new Model(input_file);
+
+    fclose(input_file);
 }
 
 //------------------------------------------------------------------------------
@@ -333,13 +345,11 @@ int main(int argc, char ** argv)
     glutKeyboardFunc(keyboard);
     glutMotionFunc(motion);
 
-    std::string str;
-    for (int i = 1; i < argc; ++i) {
-        if (!strcmp(argv[i], "-c"))
-            g_repeatCount = atoi(argv[++i]);
-        // other arg parsing here
-    }
-    initializeShapes();
+    const char* input_filename = (argc < 2) ? "models/cone.off" : argv[1];
+    for (int i = 2; i < argc; ++i)
+        printf("ignoring argument: %s\n", argv[++i]);
+
+    initializeShape(input_filename);
 
     glewInit();
 
