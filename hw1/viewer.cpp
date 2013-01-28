@@ -150,9 +150,6 @@ display() {
     //glDisableVertexAttribArray(0);
     //glDisableVertexAttribArray(1);
 
-    //if (g_drawNormals)
-        //drawNormals();
-
     GLenum polymode;
     if (g_wire == 0)
         polymode = GL_LINE;

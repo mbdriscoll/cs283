@@ -14,7 +14,7 @@ public:
     Vertex(float x, float y, float z);
     int valence();
 
-    void Render(int show_normal=0);
+    void Render();
 };
 
 class Face {
@@ -23,7 +23,7 @@ public:
     bool interior;
 
     Face();
-    void Render(int show_normals=0);
+    void Render();
     glm::vec3 Normal();
 };
 
@@ -43,7 +43,7 @@ public:
     Vertex* oppv();
 
     void set_pair(Hedge* o);
-    void Render(int show_normals);
+    void Render();
 };
 
 
@@ -54,7 +54,7 @@ public:
     std::vector<Vertex*> vertices;
 
     Object(FILE* inputfile);
-    void Render(int show_normals=0);
+    void Render();
     void SetCenterSize(float *center, float *size);
 
     void check();

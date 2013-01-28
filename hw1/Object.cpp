@@ -93,7 +93,7 @@ Object::SetCenterSize(float *center, float *size) {
 }
 
 void
-Object::Render(int show_normals) {
+Object::Render() {
     glColor3f(0.5f, 0.2f, 0.7f);
     GLfloat materialShininess[] = {128.0f};
     GLfloat materialAmbDiff[] = {0.9f, 0.1f, 0.1f, 1.0f};
@@ -104,7 +104,7 @@ Object::Render(int show_normals) {
 
     glBegin(GL_TRIANGLES);
     foreach(Face* f, faces)
-        f->Render(show_normals);
+        f->Render();
     glEnd();
 }
 
@@ -175,23 +175,23 @@ Face::Normal() {
 }
 
 void
-Face::Render(int show_normals) {
+Face::Render() {
     vec3 norm = this->Normal();
     glNormal3fv( (GLfloat*) &norm  );
 
-    this->edge->Render(show_normals);
-    this->edge->next->Render(show_normals);
-    this->edge->next->next->Render(show_normals);
+    this->edge->Render();
+    this->edge->next->Render();
+    this->edge->next->next->Render();
 }
 
 void
-Vertex::Render(int show_normal) {
+Vertex::Render() {
     glVertex3fv( (GLfloat*) &val );
 }
 
 void
-Hedge::Render(int show_normals) {
-    v->Render(show_normals);
+Hedge::Render() {
+    v->Render();
 }
 
 void
