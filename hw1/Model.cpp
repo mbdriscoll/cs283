@@ -36,7 +36,7 @@ Model::Model(FILE* input) {
     }
 
     // Scan all faces
-    for(int i = 0; i < numverts; i++) {
+    for(int i = 0; i < numfaces; i++) {
         int valence, v0, v1, v2;
         scanned = fscanf(input, "%d %d %d %d\n", &valence, &v0, &v1, &v2);
         assert(scanned == 4 && "Read a non-triangle face.");
