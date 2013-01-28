@@ -20,7 +20,7 @@ Object::Object(FILE* input) {
     int numverts, numfaces, numthree;
     scanned = fscanf(input, "%d %d %d\n", &numverts, &numfaces, &numthree);
     assert(scanned == 3 && "Could not read number of verts or faces from OFF file.");
-    printf("Model has %d faces, %d verts, %d numthree.\n", numverts, numfaces, numthree);
+    //printf("Model has %d verts, %d faces, %d numthree.\n", numverts, numfaces, numthree);
 
     faces = std::vector<Face*>();       faces.reserve(numfaces);
     hedges = std::vector<Hedge*>();     hedges.reserve(numfaces*3);
