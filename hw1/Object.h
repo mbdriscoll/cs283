@@ -15,6 +15,7 @@ public:
     int valence();
 
     void Render();
+    void DrawNormal();
 };
 
 class Face {
@@ -24,6 +25,7 @@ public:
 
     Face();
     void Render();
+    void DrawNormal();
     glm::vec3 Normal();
 };
 
@@ -55,6 +57,7 @@ public:
 
     Object(FILE* inputfile);
     void Render();
+    void DrawNormals();
     void SetCenterSize(float *center, float *size);
 
     void check();

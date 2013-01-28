@@ -244,3 +244,26 @@ Vertex::valence() {
 
     return valence;
 }
+
+void
+Object::DrawNormals() {
+    glColor3f(0.0f, 0.0f, 1.0f);
+    glBegin(GL_LINES);
+    foreach(Face *f, faces)
+        f->DrawNormal();
+    glEnd();
+}
+
+void
+Vertex::DrawNormal() {
+}
+
+void
+Face::DrawNormal() {
+    vec3 centroid = vec3(1.0/3.0) * (edge->v->val + edge->next->v->val + edge->next->next->v->val);
+    vec3 normal = vec3(0.5f) * normalize( Normal() );
+    vec3 end = centroid + normal;
+
+    glVertex3fv( (GLfloat*) &centroid );
+    glVertex3fv( (GLfloat*) &end );
+}
