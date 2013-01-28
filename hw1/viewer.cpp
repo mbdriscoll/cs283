@@ -1,16 +1,4 @@
-#if defined(__APPLE__)
-    #include <GL/glew.h>
-    #include <GLUT/glut.h>
-#else
-    #include <GL/glew.h>
-    #if defined(WIN32)
-        #include <GL/wglew.h>
-    #endif
-    #include <GL/glut.h>
-#endif
-
-//#include <osd/glMesh.h>
-//OpenSubdiv::OsdGLMeshInterface *g_mesh;
+#include "viewer.h"
 
 #include <stdlib.h>
 #include <cfloat>
@@ -103,13 +91,7 @@ initializeShape(const char* input_filename) {
 //------------------------------------------------------------------------------
 static void
 updateGeom() {
-}
-
-//------------------------------------------------------------------------------
-static void
-createOsdMesh() {
-
-    updateGeom();
+    g_model->Render();
 }
 
 //------------------------------------------------------------------------------
@@ -151,8 +133,6 @@ display() {
     glLoadIdentity();
     glTranslatef(-g_pan[0], -g_pan[1], -g_dolly);
     glRotatef(g_rotate[1], 1, 0, 0);
-    glRotatef(g_rotate[0], 0, 1, 0);
-    glTranslatef(-g_center[0], -g_center[2], g_center[1]); // z-up model
     glRotatef(-90, 1, 0, 0); // z-up model
 
     glEnableVertexAttribArray(0);
@@ -164,15 +144,17 @@ display() {
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof (GLfloat) * 6, (float*)12);
 
     // drawing
-    glDisableVertexAttribArray(0);
-    glDisableVertexAttribArray(1);
+    //glDisableVertexAttribArray(0);
+    //glDisableVertexAttribArray(1);
 
     //if (g_drawNormals)
         //drawNormals();
 
+    g_model->Render();
+
     //glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    glDisableClientState(GL_VERTEX_ARRAY);
+    //glDisableClientState(GL_VERTEX_ARRAY);
     glFinish();
 
     if (g_hud.IsVisible()) {
