@@ -116,6 +116,7 @@ display() {
     glLoadIdentity();
 
     glDisable(GL_LIGHTING);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glColor3f(1, 1, 1);
     glBegin(GL_QUADS);
     glColor3f(0.5f, 0.5f, 0.5f);
@@ -151,6 +152,13 @@ display() {
 
     //if (g_drawNormals)
         //drawNormals();
+
+    GLenum polymode;
+    if (g_wire == 0)
+        polymode = GL_LINE;
+    else
+        polymode = GL_FILL;
+    glPolygonMode(GL_FRONT_AND_BACK, polymode);
 
     g_model->Render();
 
@@ -286,7 +294,10 @@ initHUD()
     g_hud.Init(g_width, g_height);
 
     g_hud.AddCheckBox("Show normal vector (E)", false, 10, 10, callbackDisplayNormal, 0, 'e');
-    g_hud.AddCheckBox("Freeze (spc)", false, 10, 30, callbackFreeze, 0, ' ');
+
+    g_hud.AddRadioButton(1, "Wire (W)",    g_wire == 0, 10, 40, callbackWireframe, 0, 'w');
+    g_hud.AddRadioButton(1, "Shaded",      g_wire == 1, 10, 60, callbackWireframe, 1, 'w');
+    g_hud.AddRadioButton(1, "Wire+Shaded", g_wire == 2, 10, 80, callbackWireframe, 2, 'w');
 }
 
 //------------------------------------------------------------------------------
