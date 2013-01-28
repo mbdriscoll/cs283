@@ -50,15 +50,22 @@ Object::Object(FILE* input) {
         Hedge *h1 = new Hedge(v1, h0,   face);
         Hedge *h2 = new Hedge(v2, h1,   face);
         h0->next = h2;
-
         face->edge = h0;
-        // TODO set pair pointers, vertex->hedge pointers, etc.
 
         faces.push_back(face);
         hedges.push_back(h0);
         hedges.push_back(h1);
         hedges.push_back(h2);
     }
+
+    // Match edge pairs
+    map<VVpair,Hedge*> vtoe;
+    foreach (Hedge* h, this->hedges)
+        vtoe[VVpair(h->v,h->oppv())] = h;
+    foreach (Hedge* h, this->hedges)
+        h->pair = vtoe[VVpair(h->oppv(),h->v)];
+
+    this->check();
 }
 
 void
@@ -104,7 +111,6 @@ Object::Render(int show_normals) {
 }
 
 void Object::check() {
-#if 0
     int num_boundaries = 0;
     int hno = 0;
     foreach(Hedge* h, this->hedges) {
@@ -152,11 +158,11 @@ void Object::check() {
             (int) faces.size(),
             (int) hedges.size(),
             num_boundaries);
-#endif
 }
 
 Hedge::Hedge(Vertex *v, Hedge *next, Face *f) :
   v(v), next(next), f(f), pair(NULL) {
+      v->edge = this;
 }
 
 Face::Face() : edge(NULL)
