@@ -70,19 +70,18 @@ Object::Object(FILE* input) {
 
 void
 Object::SetCenterSize(float *center, float *size) {
-#if 0
     // from osd: compute model bounding
     float min[3] = { FLT_MAX,  FLT_MAX,  FLT_MAX};
     float max[3] = {-FLT_MAX, -FLT_MAX, -FLT_MAX};
 
-    std::vector<Vertex>::iterator vit;
-    for(vit = vertices.begin(); vit != vertices.end(); vit++) {
-            min[0] = std::min(min[0], vit->x);
-            max[0] = std::max(max[0], vit->x);
-            min[1] = std::min(min[1], vit->y);
-            max[1] = std::max(max[1], vit->y);
-            min[2] = std::min(min[2], vit->z);
-            max[2] = std::max(max[2], vit->z);
+    std::vector<Vertex*>::iterator vit;
+    foreach(Vertex * v, vertices) {
+            min[0] = std::min(min[0], v->val.x);
+            max[0] = std::max(max[0], v->val.x);
+            min[1] = std::min(min[1], v->val.y);
+            max[1] = std::max(max[1], v->val.y);
+            min[2] = std::min(min[2], v->val.z);
+            max[2] = std::max(max[2], v->val.z);
     }
 
     *size = 0.0f;
@@ -91,7 +90,6 @@ Object::SetCenterSize(float *center, float *size) {
         *size += (max[j]-min[j])*(max[j]-min[j]);
     }
     *size = sqrtf(*size);
-#endif
 }
 
 void
