@@ -36,10 +36,6 @@ public:
     Hedge* pair;
     Vertex* v;
 
-    Vertex* mp;
-    Hedge* cv;
-    Hedge* co;
-
     Hedge(Vertex *v, Hedge *next, Face *f);
     Hedge* prev();
     Vertex* oppv();

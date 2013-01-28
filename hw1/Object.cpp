@@ -131,10 +131,6 @@ void Object::check() {
         assert(h->v == h->next->oppv());
         assert(h->oppv() == h->prev()->v);
 
-        /* child near and opposite vertex are reflexive */
-        if (h->co != NULL && h->pair != NULL)
-            assert(h->co->pair == h->pair->cv);
-
         /* v is not oppv */
         if (h->pair != NULL)
             assert(h->v != h->oppv());
