@@ -134,6 +134,7 @@ display() {
     glLoadIdentity();
     glTranslatef(-g_pan[0], -g_pan[1], -g_dolly);
     glRotatef(g_rotate[1], 1, 0, 0);
+    glRotatef(g_rotate[0], 0, 1, 0);
     glRotatef(-90, 1, 0, 0); // z-up model
 
     glEnableVertexAttribArray(0);
