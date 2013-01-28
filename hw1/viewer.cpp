@@ -84,6 +84,7 @@ initializeShape(const char* input_filename) {
     }
 
     g_model = new Model(input_file);
+    g_model->SetCenterSize((float*) &g_center, &g_size);
 
     fclose(input_file);
 }

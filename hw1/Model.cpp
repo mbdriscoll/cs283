@@ -2,6 +2,8 @@
 #include "model.h"
 
 #include <string>
+#include <cfloat>
+#include <cmath>
 #include <cassert>
 #include <cstdlib>
 
@@ -64,4 +66,28 @@ Model::Face::Render() {
     model->vertices[v1].Render();
     model->vertices[v2].Render();
     glEnd();
+}
+
+void
+Model::SetCenterSize(float *center, float *size) {
+    // from osd: compute model bounding
+    float min[3] = { FLT_MAX,  FLT_MAX,  FLT_MAX};
+    float max[3] = {-FLT_MAX, -FLT_MAX, -FLT_MAX};
+
+    std::vector<Vertex>::iterator vit;
+    for(vit = vertices.begin(); vit != vertices.end(); vit++) {
+            min[0] = std::min(min[0], vit->x);
+            max[0] = std::max(max[0], vit->x);
+            min[1] = std::min(min[1], vit->y);
+            max[1] = std::max(max[1], vit->y);
+            min[2] = std::min(min[2], vit->z);
+            max[2] = std::max(max[2], vit->z);
+    }
+
+    *size = 0.0f;
+    for (int j=0; j<3; ++j) {
+        center[j] = (min[j] + max[j]) * 0.5f;
+        *size += (max[j]-min[j])*(max[j]-min[j]);
+    }
+    *size = sqrtf(*size);
 }

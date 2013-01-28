@@ -5,11 +5,12 @@ class Model {
   public:
       Model(FILE* input);
       void Render();
+      void SetCenterSize(float *center, float *size);
 
       class Vertex {
           Model *model;
-          float x,y,z;
         public:
+          float x,y,z;
           Vertex(Model *model, float x, float y, float z) : model(model), x(x), y(y), z(z) { }
           void Render();
       };
