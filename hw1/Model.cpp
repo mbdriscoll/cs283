@@ -47,7 +47,8 @@ Model::Model(FILE* input) {
 
 void
 Model::Render() {
-    glColor3f(1.0f, 1.0f, 0.5f);
+    glColor3f(1.0f, 1.0f, 0.0f);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     std::vector<Face>::iterator fit;
     for(fit = faces.begin(); fit != faces.end(); fit++)
