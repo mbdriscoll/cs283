@@ -268,6 +268,8 @@ keyboard(unsigned char key, int x, int y) {
         case 'q': quit();
         case 'f': fitFrame(); break;
         case '\t': toggleFullScreen(); break;
+        case '-': g_model->Collapse(1); break;
+        case '_': g_model->Collapse(10); break;
         case 0x1b: g_hud.SetVisible(!g_hud.IsVisible()); break;
     }
 }

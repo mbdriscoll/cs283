@@ -283,3 +283,8 @@ Vertex::Normal() {
 
     return normalize( normal );
 }
+
+void
+Object::Collapse(int nedges) {
+    Vertex *v0, *v1;
+}
