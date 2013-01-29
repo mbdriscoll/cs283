@@ -15,6 +15,7 @@ public:
     int valence();
 
     void Render();
+    glm::vec3 Normal();
     void DrawNormal();
 };
 

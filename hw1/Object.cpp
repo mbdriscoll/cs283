@@ -172,8 +172,8 @@ Face::Normal() {
 
 void
 Face::Render() {
-    vec3 norm = this->Normal();
-    glNormal3fv( (GLfloat*) &norm  );
+    //vec3 norm = this->Normal();
+    //glNormal3fv( (GLfloat*) &norm  );
 
     this->edge->Render();
     this->edge->next->Render();
@@ -182,6 +182,8 @@ Face::Render() {
 
 void
 Vertex::Render() {
+    vec3 norm = this->Normal();
+    glNormal3fv( (GLfloat*) &norm  );
     glVertex3fv( (GLfloat*) &val );
 }
 
@@ -243,8 +245,11 @@ Vertex::valence() {
 
 void
 Object::DrawNormals() {
-    glColor3f(0.0f, 0.0f, 1.0f);
     glBegin(GL_LINES);
+    glColor3f(0.0f, 0.0f, 1.0f);
+    foreach(Vertex *v, vertices)
+        v->DrawNormal();
+    glColor3f(0.0f, 1.0f, 0.0f);
     foreach(Face *f, faces)
         f->DrawNormal();
     glEnd();
@@ -252,6 +257,11 @@ Object::DrawNormals() {
 
 void
 Vertex::DrawNormal() {
+    vec3 normal = vec3(0.5f) * normalize( Normal() );
+    vec3 end = val + normal;
+
+    glVertex3fv( (GLfloat*) &val);
+    glVertex3fv( (GLfloat*) &end );
 }
 
 void
@@ -262,4 +272,21 @@ Face::DrawNormal() {
 
     glVertex3fv( (GLfloat*) &centroid );
     glVertex3fv( (GLfloat*) &end );
+}
+
+glm::vec3
+Vertex::Normal() {
+    vec3 normal = edge->f->Normal();;
+    Hedge *e;
+
+    // forward around vertex
+    for( e=edge->next->pair; e != NULL && e != edge; e=e->next->pair)
+        normal += e->f->Normal();
+
+    // backward if needed
+    if (e == NULL)
+        for( e=edge->pair; e != NULL && e != edge->next; e=e->next->next->pair)
+            normal += e->f->Normal();
+
+    return normalize( normal );
 }

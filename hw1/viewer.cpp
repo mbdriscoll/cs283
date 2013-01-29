@@ -157,10 +157,12 @@ display() {
         polymode = GL_FILL;
     glPolygonMode(GL_FRONT_AND_BACK, polymode);
 
-    g_model->Render();
-
     if (g_drawNormals)
         g_model->DrawNormals();
+
+    glEnable(GL_LIGHTING);
+    glShadeModel(GL_SMOOTH);
+    g_model->Render();
 
     //glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -306,12 +308,24 @@ static void
 initGL()
 {
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glEnable(GL_LIGHT0);
+    glColor3f(1, 1, 1);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
-    //glCullFace(GL_BACK);
-    //glEnable(GL_CULL_FACE);
 
-    //glGenQueries(1, &g_primQuery);
+    GLfloat color[4] = {1, 1, 1, 1};
+    GLfloat position[4] = {5, 5, 10, 1};
+    GLfloat ambient[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+    GLfloat diffuse[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+    GLfloat shininess = 25.0;
+
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, color);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, color);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, color);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, &shininess);
+    glLightfv(GL_LIGHT0, GL_POSITION, position);
+    glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
 }
 
 //------------------------------------------------------------------------------
