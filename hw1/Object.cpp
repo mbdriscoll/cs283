@@ -1,5 +1,6 @@
 #include <map>
 #include <algorithm>
+#include <vector>
 
 #include "Object.h"
 
@@ -22,9 +23,13 @@ Object::Object(FILE* input) {
     assert(scanned == 3 && "Could not read number of verts or faces from OFF file.");
     //printf("Model has %d verts, %d faces, %d numthree.\n", numverts, numfaces, numthree);
 
-    faces = std::vector<Face*>();       faces.reserve(numfaces);
-    hedges = std::vector<Hedge*>();     hedges.reserve(numfaces*3);
-    vertices = std::vector<Vertex*>();  vertices.reserve(numverts);
+    faces = std::set<Face*>();
+    hedges = std::set<Hedge*>();
+    vertices = std::set<Vertex*>();
+
+    // temporary vector to hold indexed vertices
+    vector<Vertex*> vertvec;
+    vertvec.reserve(numverts);
 
     // Scan all vertices
     for(int i = 0; i < numverts; i++) {
@@ -32,7 +37,9 @@ Object::Object(FILE* input) {
         scanned = fscanf(input, "%f %f %f\n", &x, &y, &z);
         assert(scanned == 3 && "Read vertex with a non-three number of coords.");
 
-        vertices.push_back( new Vertex(x, y, z) );
+        Vertex *newv = new Vertex(x, y, z);
+        vertices.insert(newv);
+        vertvec.push_back(newv);
     }
 
     // Scan all faces
@@ -42,9 +49,9 @@ Object::Object(FILE* input) {
         assert(scanned == 4 && "Read a non-triangle face.");
 
         Face *face = new Face();
-        Vertex *v0 = vertices[vi0],
-               *v1 = vertices[vi1],
-               *v2 = vertices[vi2];
+        Vertex *v0 = vertvec[vi0],
+               *v1 = vertvec[vi1],
+               *v2 = vertvec[vi2];
 
         Hedge *h0 = new Hedge(v0, NULL, face);
         Hedge *h1 = new Hedge(v1, h0,   face);
@@ -52,10 +59,10 @@ Object::Object(FILE* input) {
         h0->next = h2;
         face->edge = h0;
 
-        faces.push_back(face);
-        hedges.push_back(h0);
-        hedges.push_back(h1);
-        hedges.push_back(h2);
+        faces.insert(face);
+        hedges.insert(h0);
+        hedges.insert(h1);
+        hedges.insert(h2);
     }
 
     // Match edge pairs
@@ -74,7 +81,6 @@ Object::SetCenterSize(float *center, float *size) {
     float min[3] = { FLT_MAX,  FLT_MAX,  FLT_MAX};
     float max[3] = {-FLT_MAX, -FLT_MAX, -FLT_MAX};
 
-    std::vector<Vertex*>::iterator vit;
     foreach(Vertex * v, vertices) {
             min[0] = std::min(min[0], v->val.x);
             max[0] = std::max(max[0], v->val.x);

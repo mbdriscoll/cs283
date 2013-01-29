@@ -1,6 +1,6 @@
 #include "viewer.h"
 
-#include <vector>
+#include <set>
 
 class Hedge;
 class Object;
@@ -48,9 +48,9 @@ public:
 
 class Object {
 public:
-    std::vector<Face*> faces;
-    std::vector<Hedge*> hedges;
-    std::vector<Vertex*> vertices;
+    std::set<Face*> faces;
+    std::set<Hedge*> hedges;
+    std::set<Vertex*> vertices;
 
     Object(FILE* inputfile);
     void Render();
