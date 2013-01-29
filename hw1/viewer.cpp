@@ -22,7 +22,8 @@ int   g_fullscreen=0,
       g_drawCageEdges = 1,
       g_drawCageVertices = 0,
       g_drawPatchCVs = 0,
-      g_drawNormals = 0,
+      g_drawVertexNormals = 0,
+      g_drawFaceNormals = 0,
       g_mbutton[3] = {0, 0, 0};
 
 int   g_displayPatchColor = 1;
@@ -74,6 +75,14 @@ checkGLErrors(std::string const & where = "")
 
 //------------------------------------------------------------------------------
 static void
+fitFrame() {
+
+    g_pan[0] = g_pan[1] = 0;
+    g_dolly = g_size;
+}
+
+//------------------------------------------------------------------------------
+static void
 initializeShape(const char* input_filename) {
     printf("Reading object in file %s.\n", input_filename);
 
@@ -87,20 +96,14 @@ initializeShape(const char* input_filename) {
     g_model->SetCenterSize((float*) &g_center, &g_size);
 
     fclose(input_file);
+
+    fitFrame();
 }
 
 //------------------------------------------------------------------------------
 static void
 updateGeom() {
     g_model->Render();
-}
-
-//------------------------------------------------------------------------------
-static void
-fitFrame() {
-
-    g_pan[0] = g_pan[1] = 0;
-    g_dolly = g_size;
 }
 
 //------------------------------------------------------------------------------
@@ -141,27 +144,24 @@ display() {
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
 
-    //glBindBuffer(GL_ARRAY_BUFFER, g_mesh->BindVertexBuffer());
-
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof (GLfloat) * 6, 0);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof (GLfloat) * 6, (float*)12);
 
-    // drawing
-    //glDisableVertexAttribArray(0);
-    //glDisableVertexAttribArray(1);
-
-    GLenum polymode;
-    if (g_wire == 0)
-        polymode = GL_LINE;
-    else
-        polymode = GL_FILL;
-    glPolygonMode(GL_FRONT_AND_BACK, polymode);
-
-    if (g_drawNormals)
-        g_model->DrawNormals();
+    if (g_drawVertexNormals || g_drawFaceNormals)
+        g_model->DrawNormals(g_drawVertexNormals, g_drawFaceNormals);
 
     glEnable(GL_LIGHTING);
     glShadeModel(GL_SMOOTH);
+
+    glColor3f(0.5f, 0.2f, 0.7f);
+    GLfloat materialShininess[] = {128.0f};
+    GLfloat materialAmbDiff[] = {0.9f, 0.1f, 0.1f, 1.0f};
+    GLfloat materialSpecular[] = {1.0f, 1.0f, 1.0f, 1.0f};
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, materialAmbDiff);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, materialSpecular);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, materialShininess);
+
+    glPolygonMode(GL_FRONT_AND_BACK, (g_wire == 0) ? GL_LINE : GL_FILL);
     g_model->Render();
 
     //glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -280,9 +280,15 @@ callbackWireframe(int b)
 }
 
 static void
-callbackDisplayNormal(bool checked, int n)
+callbackDisplayVertexNormal(bool checked, int n)
 {
-    g_drawNormals = checked;
+    g_drawVertexNormals = checked;
+}
+
+static void
+callbackDisplayFaceNormal(bool checked, int n)
+{
+    g_drawFaceNormals = checked;
 }
 
 static void
@@ -296,11 +302,11 @@ initHUD()
 {
     g_hud.Init(g_width, g_height);
 
-    g_hud.AddCheckBox("Show normal vector (E)", false, 10, 10, callbackDisplayNormal, 0, 'e');
+    g_hud.AddCheckBox("Show face normals (e)", false, 10, 10, callbackDisplayFaceNormal, 0, 'e');
+    g_hud.AddCheckBox("Show vertex (v)",       false, 10, 30, callbackDisplayVertexNormal, 0, 'v');
 
-    g_hud.AddRadioButton(1, "Wire (W)",    g_wire == 0, 10, 40, callbackWireframe, 0, 'w');
-    g_hud.AddRadioButton(1, "Shaded",      g_wire == 1, 10, 60, callbackWireframe, 1, 'w');
-    g_hud.AddRadioButton(1, "Wire+Shaded", g_wire == 2, 10, 80, callbackWireframe, 2, 'w');
+    g_hud.AddRadioButton(1, "Wire (w)",    g_wire == 0, 10, 60, callbackWireframe, 0, 'w');
+    g_hud.AddRadioButton(1, "Shaded",      g_wire == 1, 10, 80, callbackWireframe, 1, 'w');
 }
 
 //------------------------------------------------------------------------------

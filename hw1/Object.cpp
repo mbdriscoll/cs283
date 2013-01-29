@@ -94,14 +94,6 @@ Object::SetCenterSize(float *center, float *size) {
 
 void
 Object::Render() {
-    glColor3f(0.5f, 0.2f, 0.7f);
-    GLfloat materialShininess[] = {128.0f};
-    GLfloat materialAmbDiff[] = {0.9f, 0.1f, 0.1f, 1.0f};
-    GLfloat materialSpecular[] = {1.0f, 1.0f, 1.0f, 1.0f};
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, materialAmbDiff);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, materialSpecular);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, materialShininess);
-
     glBegin(GL_TRIANGLES);
     foreach(Face* f, faces)
         f->Render();
@@ -172,9 +164,6 @@ Face::Normal() {
 
 void
 Face::Render() {
-    //vec3 norm = this->Normal();
-    //glNormal3fv( (GLfloat*) &norm  );
-
     this->edge->Render();
     this->edge->next->Render();
     this->edge->next->next->Render();
@@ -244,14 +233,18 @@ Vertex::valence() {
 }
 
 void
-Object::DrawNormals() {
+Object::DrawNormals(int vNorms, int fNorms) {
     glBegin(GL_LINES);
-    glColor3f(0.0f, 0.0f, 1.0f);
-    foreach(Vertex *v, vertices)
-        v->DrawNormal();
-    glColor3f(0.0f, 1.0f, 0.0f);
-    foreach(Face *f, faces)
-        f->DrawNormal();
+    if (vNorms) {
+        glColor3f(0.0f, 0.0f, 1.0f);
+        foreach(Vertex *v, vertices)
+            v->DrawNormal();
+    }
+    if (fNorms) {
+        glColor3f(0.0f, 1.0f, 0.0f);
+        foreach(Face *f, faces)
+            f->DrawNormal();
+    }
     glEnd();
 }
 

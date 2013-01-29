@@ -54,7 +54,7 @@ public:
 
     Object(FILE* inputfile);
     void Render();
-    void DrawNormals();
+    void DrawNormals(int vNorms, int fNorms);
     void SetCenterSize(float *center, float *size);
 
     void check();
