@@ -11,7 +11,7 @@ public:
     Hedge* edge;
     Vertex* child;
 
-    Vertex(float x, float y, float z);
+    Vertex(glm::vec3 val);
     int valence();
 
     void Render();
@@ -22,7 +22,6 @@ public:
 class Face {
 public:
     Hedge* edge;
-    bool interior;
 
     Face();
     void Render();
@@ -57,6 +56,7 @@ public:
     void DrawNormals(int vNorms, int fNorms);
     void SetCenterSize(float *center, float *size);
     void Collapse(int nedges);
+    Hedge* GetHedgeToCollapse();
 
     void check();
     void match_pairs();

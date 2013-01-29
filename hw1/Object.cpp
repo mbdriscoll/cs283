@@ -37,7 +37,7 @@ Object::Object(FILE* input) {
         scanned = fscanf(input, "%f %f %f\n", &x, &y, &z);
         assert(scanned == 3 && "Read vertex with a non-three number of coords.");
 
-        Vertex *newv = new Vertex(x, y, z);
+        Vertex *newv = new Vertex(vec3(x, y, z));
         vertices.insert(newv);
         vertvec.push_back(newv);
     }
@@ -115,10 +115,6 @@ void Object::check() {
             assert(h == h->pair->pair);
         else
             num_boundaries++;
-
-        /* interior faces have pairs */
-        if (h->f->interior == true)
-            assert(h->pair != NULL);
 
         /* next pointers are circular */
         assert(h != h->next);
@@ -206,9 +202,8 @@ Hedge::oppv() {
     return this->prev()->v;
 }
 
-Vertex::Vertex(float x, float y, float z) : edge(NULL), child(NULL) {
-    this->val = vec3(x,y,z);
-}
+Vertex::Vertex(vec3 val) : edge(NULL), child(NULL), val(val)
+{ }
 
 void
 Hedge::set_pair(Hedge* o) {
@@ -290,7 +285,29 @@ Vertex::Normal() {
     return normalize( normal );
 }
 
+Hedge*
+Object::GetHedgeToCollapse() {
+    return *(hedges.begin());
+}
+
 void
 Object::Collapse(int nedges) {
-    Vertex *v0, *v1;
+    for (int i = 0; i < nedges; i++) {
+        Hedge *e0 = GetHedgeToCollapse();
+        Hedge *e1 = e0->pair;
+
+        Face *f0 = e0->f,
+             *f1 = e1->f;
+
+        Vertex *midpoint = new Vertex(e0->v->val + e1->oppv()->val);
+
+        // register new geometry
+        vertices.insert(midpoint);
+
+        // de-register old geometry
+        hedges.erase(e0);
+        hedges.erase(e1);
+        faces.erase(f0);
+        faces.erase(f1);
+    }
 }
