@@ -17,11 +17,7 @@ int   g_frame = 0,
 // GUI variables
 int   g_fullscreen=0,
       g_freeze = 0,
-      g_wire = 2,
-      g_adaptive = 1,
-      g_drawCageEdges = 1,
-      g_drawCageVertices = 0,
-      g_drawPatchCVs = 0,
+      g_wire = 0,
       g_drawVertexNormals = 0,
       g_drawFaceNormals = 0,
       g_mbutton[3] = {0, 0, 0};
