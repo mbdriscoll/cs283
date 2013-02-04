@@ -1,6 +1,7 @@
 #include <map>
 #include <algorithm>
 #include <vector>
+#include <cstdio>
 
 #include "Object.h"
 
