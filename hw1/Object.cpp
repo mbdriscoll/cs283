@@ -143,8 +143,6 @@ void Object::check() {
         /* edges in opp direction */
         if (h->pair != NULL) {
             assert(h->v == h->pair->oppv());
-            assert(h->v->val == h->pair->oppv()->val);
-            assert(h->pair->v->val == h->oppv()->val);
             assert(h->pair->v == h->oppv());
         }
     }
@@ -318,6 +316,25 @@ Object::Collapse(int nedges) {
             e11p->set_pair(e12p);
         }
 
+        // make sure midpoint.edge is still around
+#if 0
+        if (
+                midpoint->edge == e00 ||
+                midpoint->edge == e01 ||
+                midpoint->edge == e02 ||
+
+                midpoint->edge == e10 ||
+                midpoint->edge == e11 ||
+                midpoint->edge == e12)
+            printf("warning: midpoint->edge is being deleted.\n");
+#endif
+
+        if      (e01 && e01->pair) midpoint->edge = e01->pair;
+        else if (e11 && e11->pair) midpoint->edge = e11->pair;
+        else if (e02 && e02->pair) midpoint->edge = e02->pair->prev();
+        else if (e12 && e12->pair) midpoint->edge = e12->pair->prev();
+        else printf("Can't find a suitable value for midpoint->edge\n");
+
         if (f0) faces.erase(f0);
         if (f1) faces.erase(f1);
 
@@ -349,13 +366,18 @@ Vertex::Hedges() {
     hedges.push_back(edge->next);
 
     // forward around vertex
-    for(e=edge->next->pair; e != NULL && e != edge; e=e->next->pair)
+    for(e=edge->next->pair; e != NULL && e != edge; e=e->next->pair) {
+        assert(e->next->v == this);
         hedges.push_back(e->next);
+    }
 
     // backward if needed
-    if (e == NULL)
-        for(e=edge->pair; e != NULL; e=e->next->next->pair)
+    if (e == NULL) {
+        for(e=edge->pair; e != NULL && e->prev() != edge; e=e->prev()->pair) {
+            assert(e->v == this);
             hedges.push_back(e);
+        }
+    }
 
     return hedges;
 }
