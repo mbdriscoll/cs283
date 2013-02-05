@@ -327,15 +327,11 @@ Object::Collapse(int nedges) {
             Hedge *e01p = e01->pair,
                   *e02p = e02->pair;
             e01p->set_pair(e02p);
-            assert(e01p->v == e02p->oppv());
-            assert(e02p->v == e01p->oppv());
         }
         if (e11 && e12 && e11->pair && e12->pair) {
             Hedge *e11p = e11->pair,
                   *e12p = e12->pair;
             e11p->set_pair(e12p);
-            assert(e12p->v == e11p->oppv());
-            assert(e11p->v == e12p->oppv());
         }
 
         if (f0) faces.erase(f0);
@@ -369,13 +365,13 @@ Vertex::Hedges() {
     hedges.push_back(edge->next);
 
     // forward around vertex
-    for( e=edge->next->pair; e != NULL && e != edge; e=e->next->pair)
+    for(e=edge->next->pair; e != NULL && e != edge; e=e->next->pair)
         hedges.push_back(e->next);
 
     // backward if needed
     if (e == NULL)
-        for( e=edge->pair; e != NULL && e != edge->next; e=e->next->next->pair)
-            hedges.push_back(e->next);
+        for(e=edge->pair; e != NULL; e=e->next->next->pair)
+            hedges.push_back(e);
 
     return hedges;
 }
