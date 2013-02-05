@@ -365,8 +365,6 @@ int main(int argc, char ** argv)
 
     initializeShape(input_filename);
 
-    glewInit();
-
     initGL();
 
 #ifdef WIN32

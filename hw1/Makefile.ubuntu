@@ -5,7 +5,7 @@ OBJECTS = \
 		  viewer.o
 
 CXXFLAGS = -g -ggdb3
-LDFLAGS = -lGL -lglut -lGLEW
+LDFLAGS = -lGL -lglut
 default: viewer
 
 viewer: $(OBJECTS)

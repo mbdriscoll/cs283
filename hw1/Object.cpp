@@ -5,7 +5,7 @@
 
 #include "Object.h"
 
-#define DEBUG 0
+#define DEBUG 1
 
 using namespace glm;
 using namespace std;
@@ -168,14 +168,29 @@ void Object::check() {
         assert( hedges.find(v->edge) != hedges.end() );
 
         /* valence check -- expensive */
-#if DEBUG
         int expected_valence = v->Hedges().size();
         int actual_valence = 0;
         foreach(Hedge* h, hedges)
             if (h->v == v)
                 actual_valence += 1;
         assert(actual_valence == expected_valence);
-#endif
+
+        /* hedges make rings around vertices */
+        int nring_max = 100;
+        int nring_hedges = 0;
+        for(Hedge *starte = v->edge->next->pair;
+                nring_hedges < nring_max && starte != NULL && starte != v->edge;
+                starte=starte->next->pair)
+            nring_hedges += 1;
+        assert(nring_hedges < nring_max);
+
+        nring_hedges = 0;
+        for(Hedge *starte = v->edge->pair;
+                starte != NULL && starte->prev() != v->edge;
+                starte=starte->prev()->pair)
+            nring_hedges += 1;
+        assert(nring_hedges < nring_max);
+
     }
 
     foreach(Face *f, faces) {
@@ -380,6 +395,7 @@ Object::Collapse(int nedges) {
         if (candidates.size() > 0) {
             Hedge *newe = *(candidates.begin());
             midpoint->edge = newe->prev();
+            assert( newe->v != newe->oppv() );
         } else {
             delete_mp = true;
         }
@@ -418,6 +434,7 @@ Object::Collapse(int nedges) {
         if (e11) hedges.erase(e11);
         if (e12) hedges.erase(e12);
 
+        printf("Deleted vA: %d  vB: %d  mp: %d\n", delete_va, delete_vb, delete_mp);
         vertices.erase(oldpoint);
         if (delete_mp) vertices.erase(midpoint);
         if (delete_va) vertices.erase(vA);
@@ -431,20 +448,34 @@ Object::Collapse(int nedges) {
 
 set<Hedge*>
 Vertex::Hedges() {
+    Hedge *e;
     set<Hedge*> hedges;
     hedges.insert(edge->next);
 
     // forward around vertex
-    for(Hedge *e = edge->next->pair; e != NULL && e != edge; e=e->next->pair) {
+    for(e = edge->next->pair; e != NULL && e != edge; e=e->next->pair) {
+#if DEBUG
         assert(e->next->v == this);
+        assert(hedges.find(e->next) == hedges.end());
+        //printf("f");
+#endif
         hedges.insert(e->next);
     }
 
     // backward around vertex
-    for(Hedge *e = edge->pair; e != NULL && e->prev() != edge; e=e->prev()->pair) {
-        assert(e->v == this);
-        hedges.insert(e);
-    }
+    if (e == NULL)
+        for(e = edge->pair; e != NULL && e->prev() != edge; e=e->prev()->pair) {
+#if DEBUG
+            assert(e->v == this);
+            assert(hedges.find(e) == hedges.end());
+            //printf("b");
+#endif
+            hedges.insert(e);
+        }
+
+#if DEBUG
+    //printf("\n");
+#endif
 
     return hedges;
 }
