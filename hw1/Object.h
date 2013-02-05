@@ -27,7 +27,6 @@ public:
     Face();
     void Render();
     void DrawNormal();
-    bool Degenerate();
     glm::vec3 Normal();
 };
 
@@ -59,7 +58,6 @@ public:
     void SetCenterSize(float *center, float *size);
     void Collapse(int nedges);
     Hedge* GetHedgeToCollapse();
-    void RemoveFace(Face* f);
 
     void check();
     void match_pairs();
