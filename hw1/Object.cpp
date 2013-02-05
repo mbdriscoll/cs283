@@ -216,23 +216,7 @@ Hedge::set_pair(Hedge* o) {
 
 int
 Vertex::valence() {
-    int valence = 0;
-    Hedge* current = edge;
-    do {
-        current = current->next->pair;
-        valence++;
-    } while (current != NULL && current != edge);
-
-    /* handle boundary edges */
-    if (current != edge) {
-        current = edge;
-        do {
-            current = current->prev()->pair;
-            valence++;
-        } while (current != NULL && current != edge);
-    }
-
-    return valence;
+    return Hedges().size();
 }
 
 void
