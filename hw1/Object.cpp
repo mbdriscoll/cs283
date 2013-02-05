@@ -163,8 +163,6 @@ void Object::check() {
             assert(h->v == v);
 
         /* membership check */
-        if (hedges.find(v->edge) == hedges.end())
-            printf("vertex %x can't find hedge: %x\n", v, v->edge);
         assert( hedges.find(v->edge) != hedges.end() );
 
         /* valence check */
@@ -369,41 +367,46 @@ Object::Collapse(int nedges) {
         assert( midpoint->edge != e01 );
 #endif
         set<Hedge*> candidates;
+        bool delete_mp = false;
         candidates.insert(mNeighbors.begin(), mNeighbors.end());
         candidates.insert(oNeighbors.begin(), oNeighbors.end());
-        printf("Midpoint %x :: from mp: %d, from op: %d. %d total candidates\n",
-                midpoint, mNeighbors.size(), oNeighbors.size(), candidates.size());
         candidates.erase(e00); candidates.erase(e10);
         candidates.erase(e01); candidates.erase(e11);
         candidates.erase(e02); candidates.erase(e12);
-        assert(candidates.size() > 0);
-        Hedge *newe = *(candidates.begin());
-        midpoint->edge = newe->prev();
-        printf("midpoint %x using candidate %x\n", midpoint, midpoint->edge);
+        if (candidates.size() > 0) {
+            Hedge *newe = *(candidates.begin());
+            midpoint->edge = newe->prev();
+        } else {
+            delete_mp = true;
+        }
 
+        bool delete_va = false;
         if (vA && vA->edge == e01) {
-            set<Hedge*> candidates = vA->Hedges();
-            candidates.erase(e02);
-            if (candidates.size() > 0) {
-                Hedge *newe = *(candidates.begin());
+            set<Hedge*> va_candidates = vA->Hedges();
+            va_candidates.erase(e02);
+            if (va_candidates.size() > 0) {
+                Hedge *newe = *(va_candidates.begin());
                 vA->edge = newe->prev();
+            } else {
+                delete_va = true;
             }
         }
 
+        bool delete_vb = false;
         if (vB && vB->edge == e11) {
-            set<Hedge*> candidates = vB->Hedges();
-            candidates.erase(e11);
-            if (candidates.size() > 0) {
-                Hedge *newe = *(candidates.begin());
+            set<Hedge*> vb_candidates = vB->Hedges();
+            vb_candidates.erase(e12);
+            if (vb_candidates.size() > 0) {
+                Hedge *newe = *(vb_candidates.begin());
                 vB->edge = newe->prev();
+            } else {
+                delete_vb = true;
             }
         }
 
         if (f0) faces.erase(f0);
         if (f1) faces.erase(f1);
 
-        printf("midpoint: %x  oldvertex: %x\n", midpoint, oldpoint);
-        printf("erasing hedges %x %x %x %x %x %x\n", e00, e01, e02, e10, e11, e12);
         if (e00) hedges.erase(e00);
         if (e01) hedges.erase(e01);
         if (e02) hedges.erase(e02);
@@ -412,6 +415,9 @@ Object::Collapse(int nedges) {
         if (e12) hedges.erase(e12);
 
         vertices.erase(oldpoint);
+        if (delete_mp) vertices.erase(midpoint);
+        if (delete_va) vertices.erase(vA);
+        if (delete_vb) vertices.erase(vB);
 
 #ifdef DEBUG
         this->check();
