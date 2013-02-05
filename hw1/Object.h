@@ -17,7 +17,7 @@ public:
     void Render();
     glm::vec3 Normal();
     void DrawNormal();
-    std::vector<Hedge*> Hedges();
+    std::set<Hedge*> Hedges();
 };
 
 class Face {

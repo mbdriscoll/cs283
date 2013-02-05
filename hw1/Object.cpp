@@ -163,7 +163,17 @@ void Object::check() {
             assert(h->v == v);
 
         /* membership check */
+        if (hedges.find(v->edge) == hedges.end())
+            printf("vertex %x can't find hedge: %x\n", v, v->edge);
         assert( hedges.find(v->edge) != hedges.end() );
+
+        /* valence check */
+        int expected_valence = v->Hedges().size();
+        int actual_valence = 0;
+        foreach(Hedge* h, hedges)
+            if (h->v == v)
+                actual_valence += 1;
+        assert(actual_valence == expected_valence);
     }
 
     foreach(Face *f, faces) {
@@ -255,7 +265,7 @@ Object::DrawNormals(int vNorms, int fNorms) {
     Hedge* h = GetHedgeToCollapse();
     Vertex *v0 = h->v,
            *v1 = h->oppv();
-    vec3 enorm = vec3(0.05f) * normalize(v0->Normal() + v1->Normal());
+    vec3 enorm = vec3(0.01f) * normalize(v0->Normal() + v1->Normal());
     vec3  ur = v0->val + enorm,
           ul = v1->val + enorm,
           lr = v0->val - enorm,
@@ -293,7 +303,7 @@ Vertex::Normal() {
     vec3 normal = edge->f->Normal();;
     Hedge *e;
 
-    vector<Hedge*> neighbors = Hedges();
+    set<Hedge*> neighbors = Hedges();
     foreach(Hedge *neighbor, neighbors)
         normal += neighbor->f->Normal();
 
@@ -314,11 +324,6 @@ Object::Collapse(int nedges) {
         Face *f0 = e0->f,
              *f1 = (e1) ? e1->f : NULL;
 
-        Vertex *midpoint = e0->v,
-               *oldpoint = e0->oppv();
-
-        midpoint->val = vec3(0.5) * (e0->v->val + e0->oppv()->val);
-
         Hedge *e00 = e0,
               *e01 = e0->next,
               *e02 = e0->next->next,
@@ -331,11 +336,19 @@ Object::Collapse(int nedges) {
              *f11 = (e1 && e1->next->pair)       ? e1->next->pair->f       : NULL,
              *f12 = (e1 && e1->next->next->pair) ? e1->next->next->pair->f : NULL;
 
-        vector<Hedge*> midpointHedges = midpoint->Hedges();;
+        Vertex *midpoint = e0->v,
+               *oldpoint = e0->oppv(),
+               *vA = (e00) ? e00->prev()->v : NULL,
+               *vB = (e10) ? e10->prev()->v : NULL;
+
+        midpoint->val = vec3(0.5) * (e0->v->val + e0->oppv()->val);
+
+
+        set<Hedge*> mNeighbors = midpoint->Hedges(),
+                    oNeighbors = oldpoint->Hedges();
 
         // update vertex points from edges pointing to old vertex
-        vector<Hedge*> hedgesToUpdate = oldpoint->Hedges();
-        foreach(Hedge* hedge, hedgesToUpdate) {
+        foreach(Hedge* hedge, oNeighbors) {
 #if DEBUG
             assert(hedge->v == oldpoint);
 #endif
@@ -355,19 +368,42 @@ Object::Collapse(int nedges) {
         assert( midpoint->edge != e00 );
         assert( midpoint->edge != e01 );
 #endif
-        if ( midpoint->edge == e02 ||
-             midpoint->edge == e10 ) {
+        set<Hedge*> candidates;
+        candidates.insert(mNeighbors.begin(), mNeighbors.end());
+        candidates.insert(oNeighbors.begin(), oNeighbors.end());
+        printf("Midpoint %x :: from mp: %d, from op: %d. %d total candidates\n",
+                midpoint, mNeighbors.size(), oNeighbors.size(), candidates.size());
+        candidates.erase(e00); candidates.erase(e10);
+        candidates.erase(e01); candidates.erase(e11);
+        candidates.erase(e02); candidates.erase(e12);
+        assert(candidates.size() > 0);
+        Hedge *newe = *(candidates.begin());
+        midpoint->edge = newe->prev();
+        printf("midpoint %x using candidate %x\n", midpoint, midpoint->edge);
 
-            printf("warning: midpoint->edge is being deleted.\n");
-            foreach(Hedge *h, midpointHedges)
-                if (h != e10 && h != e02)
-                    midpoint->edge = h;
+        if (vA && vA->edge == e01) {
+            set<Hedge*> candidates = vA->Hedges();
+            candidates.erase(e02);
+            if (candidates.size() > 0) {
+                Hedge *newe = *(candidates.begin());
+                vA->edge = newe->prev();
+            }
         }
-        assert( hedges.find(midpoint->edge) != hedges.end() );
+
+        if (vB && vB->edge == e11) {
+            set<Hedge*> candidates = vB->Hedges();
+            candidates.erase(e11);
+            if (candidates.size() > 0) {
+                Hedge *newe = *(candidates.begin());
+                vB->edge = newe->prev();
+            }
+        }
 
         if (f0) faces.erase(f0);
         if (f1) faces.erase(f1);
 
+        printf("midpoint: %x  oldvertex: %x\n", midpoint, oldpoint);
+        printf("erasing hedges %x %x %x %x %x %x\n", e00, e01, e02, e10, e11, e12);
         if (e00) hedges.erase(e00);
         if (e01) hedges.erase(e01);
         if (e02) hedges.erase(e02);
@@ -383,24 +419,21 @@ Object::Collapse(int nedges) {
     }
 }
 
-vector<Hedge*>
+set<Hedge*>
 Vertex::Hedges() {
-    Hedge *e;
-    vector<Hedge*> hedges;
-    hedges.push_back(edge->next);
+    set<Hedge*> hedges;
+    hedges.insert(edge->next);
 
     // forward around vertex
-    for(e=edge->next->pair; e != NULL && e != edge; e=e->next->pair) {
+    for(Hedge *e = edge->next->pair; e != NULL && e != edge; e=e->next->pair) {
         assert(e->next->v == this);
-        hedges.push_back(e->next);
+        hedges.insert(e->next);
     }
 
-    // backward if needed
-    if (e == NULL) {
-        for(e=edge->pair; e != NULL && e->prev() != edge; e=e->prev()->pair) {
-            assert(e->v == this);
-            hedges.push_back(e);
-        }
+    // backward around vertex
+    for(Hedge *e = edge->pair; e != NULL && e->prev() != edge; e=e->prev()->pair) {
+        assert(e->v == this);
+        hedges.insert(e);
     }
 
     return hedges;
