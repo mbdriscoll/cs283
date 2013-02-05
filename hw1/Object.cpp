@@ -5,7 +5,7 @@
 
 #include "Object.h"
 
-#define DEBUG 1
+#define DEBUG 0
 
 using namespace glm;
 using namespace std;
@@ -80,7 +80,9 @@ Object::Object(FILE* input) {
     foreach (Hedge* h, this->hedges)
         h->pair = vtoe[VVpair(h->oppv(),h->v)];
 
+#if DEBUG
     this->check();
+#endif
 }
 
 void
@@ -165,13 +167,15 @@ void Object::check() {
         /* membership check */
         assert( hedges.find(v->edge) != hedges.end() );
 
-        /* valence check */
+        /* valence check -- expensive */
+#if DEBUG
         int expected_valence = v->Hedges().size();
         int actual_valence = 0;
         foreach(Hedge* h, hedges)
             if (h->v == v)
                 actual_valence += 1;
         assert(actual_valence == expected_valence);
+#endif
     }
 
     foreach(Face *f, faces) {
@@ -419,7 +423,7 @@ Object::Collapse(int nedges) {
         if (delete_va) vertices.erase(vA);
         if (delete_vb) vertices.erase(vB);
 
-#ifdef DEBUG
+#if DEBUG
         this->check();
 #endif
     }
