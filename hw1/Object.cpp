@@ -5,6 +5,8 @@
 
 #include "Object.h"
 
+#define DEBUG 1
+
 using namespace glm;
 using namespace std;
 
@@ -57,6 +59,11 @@ Object::Object(FILE* input) {
         Hedge *h0 = new Hedge(v0, NULL, face);
         Hedge *h1 = new Hedge(v1, h0,   face);
         Hedge *h2 = new Hedge(v2, h1,   face);
+
+        v0->edge = h1;
+        v1->edge = h2;
+        v2->edge = h0;
+
         h0->next = h2;
         face->edge = h0;
 
@@ -122,9 +129,9 @@ void Object::check() {
         assert(h != h->next->next);
         assert(h == h->next->next->next);
 
-        /* vertex and next pointers are in the same direction */
-        assert(h->v == h->next->oppv());
-        assert(h->oppv() == h->prev()->v);
+        /* vertex and next pointers are in different directions */
+        assert(h->v == h->prev()->oppv());
+        assert(h->oppv() == h->next->v);
 
         /* v is not oppv */
         if (h->pair != NULL)
@@ -135,11 +142,16 @@ void Object::check() {
 
         /* edges in opp direction */
         if (h->pair != NULL) {
+            assert(h->v == h->pair->oppv());
             assert(h->v->val == h->pair->oppv()->val);
             assert(h->pair->v->val == h->oppv()->val);
-            assert(h->v == h->pair->oppv());
             assert(h->pair->v == h->oppv());
         }
+    }
+
+    foreach(Vertex *v, vertices) {
+        /* vertex-to-edge pointers don't align with edge-to-vertex pointers */
+        assert(v->edge->next->v == v);
     }
 
     printf("-- consistency tests passed (%d vertices, %d faces, %d hedges, %d boundary hedges) --\n",
@@ -150,9 +162,7 @@ void Object::check() {
 }
 
 Hedge::Hedge(Vertex *v, Hedge *next, Face *f) :
-  v(v), next(next), f(f), pair(NULL) {
-      v->edge = this;
-}
+  v(v), next(next), f(f), pair(NULL) { }
 
 Face::Face() : edge(NULL)
 { }
@@ -184,15 +194,6 @@ Hedge::Render() {
     v->Render();
 }
 
-void
-Object::match_pairs() {
-    map<pair<Vertex*,Vertex*>,Hedge*> vtoe;
-    foreach (Hedge* h, this->hedges)
-        vtoe[VVpair(h->v,h->oppv())] = h;
-    foreach (Hedge* h, this->hedges)
-        h->pair = vtoe[VVpair(h->oppv(),h->v)];
-}
-
 inline Hedge*
 Hedge::prev() {
     return this->next->next;
@@ -200,7 +201,7 @@ Hedge::prev() {
 
 inline Vertex*
 Hedge::oppv() {
-    return this->prev()->v;
+    return this->next->v;
 }
 
 Vertex::Vertex(vec3 val) : edge(NULL), child(NULL), val(val)
@@ -274,14 +275,9 @@ Vertex::Normal() {
     vec3 normal = edge->f->Normal();;
     Hedge *e;
 
-    // forward around vertex
-    for( e=edge->next->pair; e != NULL && e != edge; e=e->next->pair)
-        normal += e->f->Normal();
-
-    // backward if needed
-    if (e == NULL)
-        for( e=edge->pair; e != NULL && e != edge->next; e=e->next->next->pair)
-            normal += e->f->Normal();
+    vector<Hedge*> neighbors = Hedges();
+    foreach(Hedge *neighbor, neighbors)
+        normal += neighbor->f->Normal();
 
     return normalize( normal );
 }
@@ -298,17 +294,126 @@ Object::Collapse(int nedges) {
         Hedge *e1 = e0->pair;
 
         Face *f0 = e0->f,
-             *f1 = e1->f;
+             *f1 = (e1) ? e1->f : NULL;
 
-        Vertex *midpoint = new Vertex(e0->v->val + e1->oppv()->val);
+        Vertex *midpoint = e0->v,
+               *oldpoint = e0->oppv();
 
-        // register new geometry
-        vertices.insert(midpoint);
+        midpoint->val = vec3(0.5) * (e0->v->val + e0->oppv()->val);
 
-        // de-register old geometry
-        hedges.erase(e0);
-        hedges.erase(e1);
-        faces.erase(f0);
-        faces.erase(f1);
+        Hedge *e00 = e0,
+              *e01 = e0->next,
+              *e02 = e0->next->next,
+              *e10 = e0->pair,
+              *e11 = (e10) ? e10->next : NULL,
+              *e12 = (e11) ? e11->next : NULL;
+
+        Face *f01 = (e0->next->pair)             ? e0->next->pair->f       : NULL,
+             *f02 = (e0->next->next->pair)       ? e0->next->next->pair->f : NULL,
+             *f11 = (e1 && e1->next->pair)       ? e1->next->pair->f       : NULL,
+             *f12 = (e1 && e1->next->next->pair) ? e1->next->next->pair->f : NULL;
+
+        // update vertex points from edges pointing to old vertex
+        vector<Hedge*> hedgesToUpdate = oldpoint->Hedges();
+        foreach(Hedge* hedge, hedgesToUpdate) {
+#if DEBUG
+            assert(hedge->v == oldpoint);
+#endif
+            hedge->v = midpoint;
+        }
+
+        // fix up pairs
+        if (e01 && e02 && e01->pair && e02->pair) {
+            Hedge *e01p = e01->pair,
+                  *e02p = e02->pair;
+            e01p->set_pair(e02p);
+            assert(e01p->v == e02p->oppv());
+            assert(e02p->v == e01p->oppv());
+        }
+        if (e11 && e12 && e11->pair && e12->pair) {
+            Hedge *e11p = e11->pair,
+                  *e12p = e12->pair;
+            e11p->set_pair(e12p);
+            assert(e12p->v == e11p->oppv());
+            assert(e11p->v == e12p->oppv());
+        }
+
+        if (f0) faces.erase(f0);
+        if (f1) faces.erase(f1);
+
+        if (e00) hedges.erase(e00);
+        if (e01) hedges.erase(e01);
+        if (e02) hedges.erase(e02);
+        if (e10) hedges.erase(e10);
+        if (e11) hedges.erase(e11);
+        if (e12) hedges.erase(e12);
+
+        vertices.erase(oldpoint);
+#if 0
+        if (f01 && f01->Degenerate()) RemoveFace(f01);
+        if (f02 && f02->Degenerate()) RemoveFace(f02);
+        if (f11 && f11->Degenerate()) RemoveFace(f11);
+        if (f12 && f12->Degenerate()) RemoveFace(f12);
+#endif
+
+#ifdef DEBUG
+        this->check();
+#endif
     }
 }
+
+vector<Hedge*>
+Vertex::Hedges() {
+    Hedge *e;
+    vector<Hedge*> hedges;
+    hedges.push_back(edge->next);
+
+    // forward around vertex
+    for( e=edge->next->pair; e != NULL && e != edge; e=e->next->pair)
+        hedges.push_back(e->next);
+
+    // backward if needed
+    if (e == NULL)
+        for( e=edge->pair; e != NULL && e != edge->next; e=e->next->next->pair)
+            hedges.push_back(e->next);
+
+    return hedges;
+}
+
+void
+Object::RemoveFace(Face* face) {
+#ifdef DEBUG
+    assert(face->Degenerate());
+#endif
+
+    Hedge  *e0 = face->edge,
+           *e1 = face->edge->next,
+           *e2 = face->edge->next->next;
+    Vertex *v0 = e0->v,
+           *v1 = e1->v,
+           *v2 = e2->v;
+
+    float e0len = length(e0->v->val - e0->oppv()->val),
+          e1len = length(e1->v->val - e1->oppv()->val),
+          e2len = length(e2->v->val - e2->oppv()->val);
+
+    if (e0len == 0.0f || e1len == 0.0f || e2len == 0.0f)
+        printf("Found zero-length edge.\n");
+    else
+        printf("Found non-zero length edges.\n");
+
+    faces.erase(face);
+    printf("Found degen face.\n");
+}
+
+bool
+Face::Degenerate() {
+
+    mat3x3 system(
+        edge->v->val,
+        edge->next->v->val,
+        edge->next->next->v->val
+    );
+    return determinant(system) == 0.0f;
+}
+
