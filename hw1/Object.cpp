@@ -566,12 +566,16 @@ VertexSplit::VertexSplit(Hedge *e00)
 
 bool
 Hedge::IsDegenerate() {
+    /*
+     * A hedge is degenerate if it borders two coplanar faces
+     */
+
+    /* Not degen if this is a boundary hedge */
     if (this->pair == NULL)
         return false;
 
-    /* third vertex in each face is in same location */
+    /* check if other vertex in each face is in same location */
     Vertex *v0 = this->prev()->v,
            *v1 = this->pair->prev()->v;
-
     return v0->val == v1->val;;
 }
