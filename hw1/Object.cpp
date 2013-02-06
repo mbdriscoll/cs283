@@ -491,6 +491,11 @@ Vertex::Hedges() {
 
 void
 VertexSplit::Apply(Object* o) {
+
+    /* recreate fins in reverse order */
+    if (degenB) degenB->Apply(o);
+    if (degenA) degenA->Apply(o);
+
     /* move target to original location */
     target->val = target_loc;
 
@@ -561,5 +566,12 @@ VertexSplit::VertexSplit(Hedge *e00)
 
 bool
 Hedge::IsDegenerate() {
-    return false;
+    if (this->pair == NULL)
+        return false;
+
+    /* third vertex in each face is in same location */
+    Vertex *v0 = this->prev()->v,
+           *v1 = this->pair->prev()->v;
+
+    return v0->val == v1->val;;
 }
