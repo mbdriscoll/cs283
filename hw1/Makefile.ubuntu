@@ -1,0 +1,14 @@
+OBJECTS = \
+		  Object.o \
+		  extra/hud.o \
+		  extra/gl_hud.o \
+		  viewer.o
+
+CXXFLAGS = -g -ggdb3
+LDFLAGS = -lGL -lglut
+default: viewer
+
+viewer: $(OBJECTS)
+
+clean:
+	rm -rf viewer $(OBJECTS)

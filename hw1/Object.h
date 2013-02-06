@@ -17,6 +17,7 @@ public:
     void Render();
     glm::vec3 Normal();
     void DrawNormal();
+    std::set<Hedge*> Hedges();
 };
 
 class Face {
@@ -58,6 +59,6 @@ public:
     void Collapse(int nedges);
     Hedge* GetHedgeToCollapse();
 
-    void check();
+    int check();
     void match_pairs();
 };

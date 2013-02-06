@@ -1,9 +1,18 @@
+#include <cstdio>
 #include <map>
 #include <algorithm>
 #include <vector>
 #include <cstdio>
 
 #include "Object.h"
+
+#define DEBUG 0
+
+#if DEBUG
+    #define DEBUG_ASSERT(cnd) assert((cnd));
+#else
+    #define DEBUG_ASSERT(cmd) {};
+#endif
 
 using namespace glm;
 using namespace std;
@@ -57,6 +66,11 @@ Object::Object(FILE* input) {
         Hedge *h0 = new Hedge(v0, NULL, face);
         Hedge *h1 = new Hedge(v1, h0,   face);
         Hedge *h2 = new Hedge(v2, h1,   face);
+
+        v0->edge = h1;
+        v1->edge = h2;
+        v2->edge = h0;
+
         h0->next = h2;
         face->edge = h0;
 
@@ -107,7 +121,8 @@ Object::Render() {
     glEnd();
 }
 
-void Object::check() {
+int Object::check() {
+
     int num_boundaries = 0;
     int hno = 0;
     foreach(Hedge* h, this->hedges) {
@@ -122,9 +137,9 @@ void Object::check() {
         assert(h != h->next->next);
         assert(h == h->next->next->next);
 
-        /* vertex and next pointers are in the same direction */
-        assert(h->v == h->next->oppv());
-        assert(h->oppv() == h->prev()->v);
+        /* vertex and next pointers are in different directions */
+        assert(h->v == h->prev()->oppv());
+        assert(h->oppv() == h->next->v);
 
         /* v is not oppv */
         if (h->pair != NULL)
@@ -135,11 +150,59 @@ void Object::check() {
 
         /* edges in opp direction */
         if (h->pair != NULL) {
-            assert(h->v->val == h->pair->oppv()->val);
-            assert(h->pair->v->val == h->oppv()->val);
             assert(h->v == h->pair->oppv());
             assert(h->pair->v == h->oppv());
         }
+
+        /* membership checks */
+        assert( faces.find(h->f) != faces.end() );
+        assert( hedges.find(h->next) != hedges.end() );
+        assert( vertices.find(h->v) != vertices.end() );
+        if (h->pair)
+            assert( hedges.find(h->pair) != hedges.end() );
+    }
+
+    foreach(Vertex *v, vertices) {
+        /* vertex-to-edge pointers don't align with edge-to-vertex pointers */
+        assert(v->edge->next->v == v);
+
+        /* Hedges returns hedges that point to this */
+        foreach(Hedge* h, v->Hedges())
+            assert(h->v == v);
+
+        /* membership check */
+        assert( hedges.find(v->edge) != hedges.end() );
+
+        /* valence check -- expensive */ /*
+        int expected_valence = v->Hedges().size();
+        int actual_valence = 0;
+        foreach(Hedge* h, hedges)
+            if (h->v == v)
+                actual_valence += 1;
+        assert(actual_valence == expected_valence);
+        */
+
+        /* hedges make rings around vertices */
+        int nring_max = 100;
+        int nring_hedges = 0;
+        for(Hedge *starte = v->edge->next->pair;
+                nring_hedges < nring_max && starte != NULL && starte != v->edge;
+                starte=starte->next->pair)
+            nring_hedges += 1;
+        assert(nring_hedges < nring_max);
+
+        nring_hedges = 0;
+        for(Hedge *starte = v->edge->pair;
+                starte != NULL && starte->prev() != v->edge;
+                starte=starte->prev()->pair)
+            nring_hedges += 1;
+        assert(nring_hedges < nring_max);
+
+    }
+
+    foreach(Face *f, faces) {
+        /* membership check */
+        assert( hedges.find(f->edge) != hedges.end() );
     }
 
     printf("-- consistency tests passed (%d vertices, %d faces, %d hedges, %d boundary hedges) --\n",
@@ -147,12 +210,12 @@ void Object::check() {
             (int) faces.size(),
             (int) hedges.size(),
             num_boundaries);
+
+    return 1;
 }
 
 Hedge::Hedge(Vertex *v, Hedge *next, Face *f) :
-  v(v), next(next), f(f), pair(NULL) {
-      v->edge = this;
-}
+  v(v), next(next), f(f), pair(NULL) { }
 
 Face::Face() : edge(NULL)
 { }
@@ -184,15 +247,6 @@ Hedge::Render() {
     v->Render();
 }
 
-void
-Object::match_pairs() {
-    map<pair<Vertex*,Vertex*>,Hedge*> vtoe;
-    foreach (Hedge* h, this->hedges)
-        vtoe[VVpair(h->v,h->oppv())] = h;
-    foreach (Hedge* h, this->hedges)
-        h->pair = vtoe[VVpair(h->oppv(),h->v)];
-}
-
 inline Hedge*
 Hedge::prev() {
     return this->next->next;
@@ -200,7 +254,7 @@ Hedge::prev() {
 
 inline Vertex*
 Hedge::oppv() {
-    return this->prev()->v;
+    return this->next->v;
 }
 
 Vertex::Vertex(vec3 val) : edge(NULL), child(NULL), val(val)
@@ -215,23 +269,7 @@ Hedge::set_pair(Hedge* o) {
 
 int
 Vertex::valence() {
-    int valence = 0;
-    Hedge* current = edge;
-    do {
-        current = current->next->pair;
-        valence++;
-    } while (current != NULL && current != edge);
-
-    /* handle boundary edges */
-    if (current != edge) {
-        current = edge;
-        do {
-            current = current->prev()->pair;
-            valence++;
-        } while (current != NULL && current != edge);
-    }
-
-    return valence;
+    return Hedges().size();
 }
 
 void
@@ -247,6 +285,23 @@ Object::DrawNormals(int vNorms, int fNorms) {
         foreach(Face *f, faces)
             f->DrawNormal();
     }
+    glEnd();
+
+    // Draw a quad by the next edge to collapse
+    Hedge* h = GetHedgeToCollapse();
+    Vertex *v0 = h->v,
+           *v1 = h->oppv();
+    vec3 enorm = vec3(0.01f) * normalize(v0->Normal() + v1->Normal());
+    vec3  ur = v0->val + enorm,
+          ul = v1->val + enorm,
+          lr = v0->val - enorm,
+          ll = v1->val - enorm;
+    glColor3f(0.0f, 1.0f, 0.0f);
+    glBegin(GL_QUADS);
+    glVertex3fv( (GLfloat*) &ur );
+    glVertex3fv( (GLfloat*) &ul );
+    glVertex3fv( (GLfloat*) &ll );
+    glVertex3fv( (GLfloat*) &lr );
     glEnd();
 }
 
@@ -274,14 +329,9 @@ Vertex::Normal() {
     vec3 normal = edge->f->Normal();;
     Hedge *e;
 
-    // forward around vertex
-    for( e=edge->next->pair; e != NULL && e != edge; e=e->next->pair)
-        normal += e->f->Normal();
-
-    // backward if needed
-    if (e == NULL)
-        for( e=edge->pair; e != NULL && e != edge->next; e=e->next->next->pair)
-            normal += e->f->Normal();
+    set<Hedge*> neighbors = Hedges();
+    foreach(Hedge *neighbor, neighbors)
+        normal += neighbor->f->Normal();
 
     return normalize( normal );
 }
@@ -297,18 +347,135 @@ Object::Collapse(int nedges) {
         Hedge *e0 = GetHedgeToCollapse();
         Hedge *e1 = e0->pair;
 
+        // -------------------------------------------------------
+        // save state
+
         Face *f0 = e0->f,
-             *f1 = e1->f;
+             *f1 = (e1) ? e1->f : NULL;
 
-        Vertex *midpoint = new Vertex(e0->v->val + e1->oppv()->val);
+        Hedge *e00 = e0,
+              *e01 = e0->next,
+              *e02 = e0->next->next,
+              *e10 = e0->pair,
+              *e11 = (e10) ? e10->next : NULL,
+              *e12 = (e11) ? e11->next : NULL;
 
-        // register new geometry
-        vertices.insert(midpoint);
+        Face *f01 = (e0->next->pair)             ? e0->next->pair->f       : NULL,
+             *f02 = (e0->next->next->pair)       ? e0->next->next->pair->f : NULL,
+             *f11 = (e1 && e1->next->pair)       ? e1->next->pair->f       : NULL,
+             *f12 = (e1 && e1->next->next->pair) ? e1->next->next->pair->f : NULL;
 
-        // de-register old geometry
-        hedges.erase(e0);
-        hedges.erase(e1);
-        faces.erase(f0);
-        faces.erase(f1);
+        Vertex *midpoint = e0->v,
+               *oldpoint = e0->oppv(),
+               *vA = (e00) ? e00->prev()->v : NULL,
+               *vB = (e10) ? e10->prev()->v : NULL;
+
+        midpoint->val = vec3(0.5) * (e0->v->val + e0->oppv()->val);
+
+
+        set<Hedge*> mNeighbors = midpoint->Hedges(),
+                    oNeighbors = oldpoint->Hedges();
+
+        bool delete_mp = false,
+             delete_va = false,
+             delete_vb = false;
+
+        // -------------------------------------------------------
+        // make updates
+
+        // update vertex points from edges pointing to old vertex
+        foreach(Hedge* hedge, oNeighbors) {
+            DEBUG_ASSERT(hedge->v == oldpoint);
+            hedge->v = midpoint;
+        }
+
+        // fix up pairs
+        if (e01 && e01->pair) e01->pair->pair = (e02) ? e02->pair : NULL;
+        if (e02 && e02->pair) e02->pair->pair = (e01) ? e01->pair : NULL;
+        if (e11 && e11->pair) e11->pair->pair = (e12) ? e12->pair : NULL;
+        if (e12 && e12->pair) e12->pair->pair = (e11) ? e11->pair : NULL;
+
+
+#if DEBUG
+        assert(mNeighbors.find(e11) != mNeighbors.end());
+        assert(mNeighbors.find(e10) == mNeighbors.end());
+        assert(mNeighbors.find(e12) == mNeighbors.end());
+        assert(mNeighbors.find(e01) == mNeighbors.end());
+        assert(mNeighbors.find(e00) != mNeighbors.end());
+        assert(mNeighbors.find(e02) == mNeighbors.end());
+
+        assert(oNeighbors.find(e01) != oNeighbors.end());
+        assert(oNeighbors.find(e00) == oNeighbors.end());
+        assert(oNeighbors.find(e02) == oNeighbors.end());
+        assert(oNeighbors.find(e11) == oNeighbors.end());
+        assert(oNeighbors.find(e10) != oNeighbors.end());
+        assert(oNeighbors.find(e12) == oNeighbors.end());
+#endif
+
+        // make sure midpoint.edge is still accurate
+        if      (e11 && e11->pair) midpoint->edge = e11->pair;
+        else if (e02 && e02->pair) midpoint->edge = e02->pair->prev();
+        else if (e01 && e01->pair) midpoint->edge = e01->pair;
+        else if (e12 && e12->pair) midpoint->edge = e12->pair->prev();
+        else    delete_mp = true;
+
+        // make sure vA.edge is still accurate
+        if (vA && vA->edge == e01) {
+            if      (e02 && e02->pair) vA->edge = e02->pair;
+            else if (e01 && e01->pair) vA->edge = e01->pair->prev();
+            else    delete_va = true;
+        }
+
+        // make sure vB.edge is still accurate
+        if (vB && vB->edge == e11) {
+            if      (e12 && e12->pair) vB->edge = e12->pair;
+            else if (e11 && e11->pair) vB->edge = e11->pair->prev();
+            else    delete_vb = true;
+        }
+
+        // remove geom from f/v/e sets
+        if (f0) faces.erase(f0);
+        if (f1) faces.erase(f1);
+
+        if (e00) hedges.erase(e00);
+        if (e01) hedges.erase(e01);
+        if (e02) hedges.erase(e02);
+        if (e10) hedges.erase(e10);
+        if (e11) hedges.erase(e11);
+        if (e12) hedges.erase(e12);
+
+        vertices.erase(oldpoint);
+        if (delete_mp) vertices.erase(midpoint);
+        if (delete_va) vertices.erase(vA);
+        if (delete_vb) vertices.erase(vB);
+
+        DEBUG_ASSERT( this->check() );
     }
+}
+
+set<Hedge*>
+Vertex::Hedges() {
+    Hedge *e;
+    set<Hedge*> hedges;
+    hedges.insert(edge->next);
+
+    // forward around vertex
+    for(e = edge->next->pair; e != NULL && e != edge; e=e->next->pair) {
+        DEBUG_ASSERT(e->next->v == this);
+        DEBUG_ASSERT(hedges.find(e->next) == hedges.end());
+        //printf("f");
+        hedges.insert(e->next);
+    }
+
+    // backward around vertex
+    if (e == NULL)
+        for(e = edge->pair; e != NULL && e->prev() != edge; e=e->prev()->pair) {
+            DEBUG_ASSERT(e->v == this);
+            DEBUG_ASSERT(hedges.find(e) == hedges.end());
+            //printf("b");
+            hedges.insert(e);
+        }
+
+    //printf("\n");
+    return hedges;
 }

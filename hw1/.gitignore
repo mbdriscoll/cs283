@@ -1,3 +1,4 @@
 viewer
+Makefile
 *.o
 *.swp

@@ -17,11 +17,7 @@ int   g_frame = 0,
 // GUI variables
 int   g_fullscreen=0,
       g_freeze = 0,
-      g_wire = 2,
-      g_adaptive = 1,
-      g_drawCageEdges = 1,
-      g_drawCageVertices = 0,
-      g_drawPatchCVs = 0,
+      g_wire = 0,
       g_drawVertexNormals = 0,
       g_drawFaceNormals = 0,
       g_mbutton[3] = {0, 0, 0};
@@ -269,7 +265,7 @@ keyboard(unsigned char key, int x, int y) {
         case 'f': fitFrame(); break;
         case '\t': toggleFullScreen(); break;
         case '-': g_model->Collapse(1); break;
-        case '_': g_model->Collapse(10); break;
+        case '_': g_model->Collapse((int) (0.1f * (float) g_model->vertices.size())); break;
         case 0x1b: g_hud.SetVisible(!g_hud.IsVisible()); break;
     }
 }
@@ -368,8 +364,6 @@ int main(int argc, char ** argv)
         printf("ignoring argument: %s\n", argv[++i]);
 
     initializeShape(input_filename);
-
-    glewInit();
 
     initGL();
 

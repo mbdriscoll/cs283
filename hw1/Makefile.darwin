@@ -9,14 +9,9 @@ OBJECTS = \
 
 CXXFLAGS = -I/opt/local/include
 LDFLAGS = -framework GLUT -framework OpenGL -L/opt/local/lib -lGLEW
-
-
 default: viewer
 
 viewer: $(OBJECTS)
-
-linux:
-	make -f Makefile.linux
 
 clean:
 	rm -rf viewer $(OBJECTS)
