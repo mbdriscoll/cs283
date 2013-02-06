@@ -479,8 +479,45 @@ Vertex::Hedges() {
 }
 
 void
-Object::Split(VertexSplit& state) {
+VertexSplit::Apply(Object* o) {
+    /* move target to original location */
+    target->val = target_loc;
 
+    /* fix hedge->vertex pointers */
+#if DEBUG
+    foreach(Hedge* h, targetHedges)
+        assert(h->v == target);
+#endif
+    foreach(Hedge* h, newpointHedges)
+        h->v = newpoint;
+
+    /* fix up pairs */
+    if (e01 && e01->pair) e01->pair->pair = e01;
+    if (e02 && e02->pair) e02->pair->pair = e02;
+    if (e11 && e11->pair) e11->pair->pair = e11;
+    if (e12 && e12->pair) e12->pair->pair = e12;
+
+    DEBUG_ASSERT(e00->pair = e10);
+    if (e10) DEBUG_ASSERT(e10->pair == e00);
+
+    /* set vertex->edge pointers */
+    target->edge = e02;
+    newpoint->edge = e00;
+
+    /* register primitives with Object */
+    o->hedges.insert(e00);
+    o->hedges.insert(e01);
+    o->hedges.insert(e02);
+    if (e10) o->hedges.insert(e10);
+    if (e11) o->hedges.insert(e11);
+    if (e12) o->hedges.insert(e12);
+
+    o->faces.insert(f0);
+    if (f1) o->faces.insert(f1);
+
+    o->vertices.insert(newpoint);
+    if (vA) o->vertices.insert(vA);
+    if (vB) o->vertices.insert(vB);
 }
 
 VertexSplit::VertexSplit(Hedge *e00) : e00(e00) {

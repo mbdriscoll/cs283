@@ -58,7 +58,6 @@ public:
     void DrawNormals(int vNorms, int fNorms);
     void SetCenterSize(float *center, float *size);
     VertexSplit Collapse();
-    void Split(VertexSplit& state);
     Hedge* GetHedgeToCollapse();
 
     int check();
@@ -76,4 +75,5 @@ class VertexSplit {
     std::set<Hedge*> targetHedges, newpointHedges;
 
     VertexSplit(Hedge *e00);
+    void Apply(Object* o);
 };

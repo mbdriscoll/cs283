@@ -266,24 +266,22 @@ keyboard(unsigned char key, int x, int y) {
         case 0x1b: g_hud.SetVisible(!g_hud.IsVisible()); break;
 
         /* edge pops */
-        case '-': vsplits.push_back(g_model->Collapse()); break;
+        case '-':
         case '_': {
-                      for(int i = 0; i < (int) (0.1f * (float) g_model->vertices.size()); i++)
+                      int npops = (key == '-') ? 1 : (int) (0.2f * (float) g_model->faces.size());
+                      npops = std::min(npops, (int) g_model->faces.size() - 2);
+                      for(int i = 0; i < npops; i++)
                           vsplits.push_back(g_model->Collapse());
                       break;
                   }
 
         /* vertex splits */
-        case '=': {
-                      VertexSplit& vsplit = vsplits.back();
-                      g_model->Split(vsplit);
-                      vsplits.pop_back();
-                      break;
-                  }
+        case '=':
         case '+': {
-                      for(int i = 0; i < (int) (0.2f * (float) vsplits.size()); i++) {
-                          VertexSplit& vsplit = vsplits.back();
-                          g_model->Split(vsplit);
+                      int nsplits = (key == '=') ? 1 : (int) (0.2f * (float) vsplits.size());
+                      nsplits = std::min(nsplits, (int) vsplits.size());
+                      for(int i = 0; i < nsplits; i++) {
+                          vsplits.back().Apply(g_model);
                           vsplits.pop_back();
                       }
                       break;
