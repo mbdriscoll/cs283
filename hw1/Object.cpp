@@ -374,12 +374,9 @@ Object::Collapse(int nedges) {
         set<Hedge*> mNeighbors = midpoint->Hedges(),
                     oNeighbors = oldpoint->Hedges();
 
-        set<Hedge*> candidates;
         bool delete_mp = false,
              delete_va = false,
              delete_vb = false;
-        candidates.insert(mNeighbors.begin(), mNeighbors.end());
-        candidates.insert(oNeighbors.begin(), oNeighbors.end());
 
         // -------------------------------------------------------
         // make updates
@@ -412,24 +409,13 @@ Object::Collapse(int nedges) {
         assert(oNeighbors.find(e11) == oNeighbors.end());
         assert(oNeighbors.find(e10) != oNeighbors.end());
         assert(oNeighbors.find(e12) == oNeighbors.end());
-
-        foreach(Hedge* h, candidates)
-            assert(h->v == midpoint);
 #endif
 
-        candidates.erase(e11);
-        candidates.erase(e01);
-        candidates.erase(e00);
-        candidates.erase(e10);
-
-        if (candidates.size() > 0) {
-            Hedge *newe = *(candidates.begin());
-            assert( newe->v == midpoint );
-            midpoint->edge = newe->prev();
-            assert( newe->v != newe->oppv() );
-        } else {
-            delete_mp = true;
-        }
+        if      (e11 && e11->pair) midpoint->edge = e11->pair;
+        else if (e02 && e02->pair) midpoint->edge = e02->pair->prev();
+        else if (e01 && e01->pair) midpoint->edge = e01->pair;
+        else if (e12 && e12->pair) midpoint->edge = e12->pair->prev();
+        else    delete_mp = true;
 
         if (vA && vA->edge == e01) {
             if      (e02 && e02->pair) vA->edge = e02->pair;
