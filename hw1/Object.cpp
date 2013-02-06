@@ -553,6 +553,10 @@ VertexSplit::Apply(Object* o) {
     o->vertices.insert(newpoint);
     if (vA) o->vertices.insert(vA);
     if (vB) o->vertices.insert(vB);
+
+    /* hack to make vA and vB enter smoothly */
+    if (vA) vA->MoveFrom(newpoint->Position());
+    if (vB) vB->MoveFrom(target->Position());
 }
 
 VertexSplit::VertexSplit(Hedge *e00)
@@ -626,4 +630,10 @@ Vertex::MoveTo(vec3 dval) {
 glm::vec3
 Vertex::Position() {
     return dstval + (srcval-dstval) * vec3((float)framesleft/ (float)N_FRAMES_PER_SPLIT);
+}
+
+void
+Vertex::MoveFrom(vec3 sval) {
+    srcval = sval;
+    framesleft = N_FRAMES_PER_SPLIT;
 }

@@ -22,6 +22,7 @@ public:
     glm::vec3 Position();
     void DrawNormal();
     void MoveTo(glm::vec3 dstval);
+    void MoveFrom(glm::vec3 dstval);
     std::set<Hedge*> Hedges();
 };
 
