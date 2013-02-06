@@ -376,7 +376,7 @@ Object::Collapse() {
          delete_va = false,
          delete_vb = false;
 
-    VertexSplit state(midpoint, oldpoint, vA, vB, e00, e01, e02, e10, e11, e12, f0, f1, e0->v->val);
+    VertexSplit state(e00);
 
     // -------------------------------------------------------
     // make updates
@@ -481,4 +481,29 @@ Vertex::Hedges() {
 void
 Object::Split(VertexSplit& state) {
 
+}
+
+VertexSplit::VertexSplit(Hedge *e00) : e00(e00) {
+    DEBUG_ASSERT(e00);
+
+    e01 = e00->next;
+    e02 = e00->prev();
+
+    e10 = e00->pair;
+    e11 = (e10) ? e10->next : NULL;
+    e12 = (e10) ? e10->prev() : NULL;
+
+    f0 = e00->f;
+    f1 = (e10) ? e10->f: NULL;
+
+    target = e00->v;
+    target_loc = target->val;
+    newpoint = e00->oppv();
+
+    targetHedges = std::set<Hedge*>(target->Hedges());
+    newpointHedges = std::set<Hedge*>(newpoint->Hedges());
+
+    /* set vA and vB only if they need to be inserted */
+    vA = (e02 && e02->v->Hedges().size() == 1) ? e02->v : NULL;
+    vB = (e12 && e12->v->Hedges().size() == 1) ? e12->v : NULL;
 }

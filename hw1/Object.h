@@ -67,22 +67,13 @@ public:
 
 class VertexSplit {
   public:
+    /* Lots of this can be derived but it's complicated when the mesh has been mutated,
+     * so let's just store it to simplify things. */
     Vertex *target, *newpoint, *vA, *vB;
     Hedge *e00, *e01, *e02, *e10, *e11, *e12;
     Face *f0, *f1;
     glm::vec3 target_loc;
     std::set<Hedge*> targetHedges, newpointHedges;
 
-    VertexSplit(
-            Vertex *target, Vertex *newpoint, Vertex *vA, Vertex *vB,
-            Hedge *e00, Hedge *e01, Hedge *e02, Hedge *e10, Hedge *e11, Hedge *e12,
-            Face *f0, Face *f1,
-            glm::vec3 target_loc) :
-        target(target), newpoint(newpoint), vA(vA), vB(vB),
-        e00(e00), e01(e01), e02(e02), e10(e10), e11(e11), e12(e12),
-        f0(f0), f1(f1), target_loc(target_loc)
-    {
-        targetHedges = std::set<Hedge*>(target->Hedges());
-        newpointHedges = std::set<Hedge*>(newpoint->Hedges());
-    }
+    VertexSplit(Hedge *e00);
 };
