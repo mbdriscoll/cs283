@@ -5,7 +5,7 @@
 
 #include "Object.h"
 
-#define DEBUG 1
+#define DEBUG 0
 
 #if DEBUG
     #define DEBUG_ASSERT(cnd) assert((cnd));
@@ -86,7 +86,7 @@ Object::Object(FILE* input) {
     foreach (Hedge* h, this->hedges)
         h->pair = vtoe[VVpair(h->oppv(),h->v)];
 
-    DEBUG_ASSERT( this->check() );
+    this->check();
 }
 
 void
@@ -395,7 +395,6 @@ Object::Collapse(int nedges) {
         if (e12 && e12->pair) e12->pair->pair = (e11) ? e11->pair : NULL;
 
 
-        // make sure midpoint.edge is still accurate
 #if DEBUG
         assert(mNeighbors.find(e11) != mNeighbors.end());
         assert(mNeighbors.find(e10) == mNeighbors.end());
@@ -412,24 +411,28 @@ Object::Collapse(int nedges) {
         assert(oNeighbors.find(e12) == oNeighbors.end());
 #endif
 
+        // make sure midpoint.edge is still accurate
         if      (e11 && e11->pair) midpoint->edge = e11->pair;
         else if (e02 && e02->pair) midpoint->edge = e02->pair->prev();
         else if (e01 && e01->pair) midpoint->edge = e01->pair;
         else if (e12 && e12->pair) midpoint->edge = e12->pair->prev();
         else    delete_mp = true;
 
+        // make sure vA.edge is still accurate
         if (vA && vA->edge == e01) {
             if      (e02 && e02->pair) vA->edge = e02->pair;
             else if (e01 && e01->pair) vA->edge = e01->pair->prev();
             else    delete_va = true;
         }
 
+        // make sure vB.edge is still accurate
         if (vB && vB->edge == e11) {
             if      (e12 && e12->pair) vB->edge = e12->pair;
             else if (e11 && e11->pair) vB->edge = e11->pair->prev();
             else    delete_vb = true;
         }
 
+        // remove geom from f/v/e sets
         if (f0) faces.erase(f0);
         if (f1) faces.erase(f1);
 
