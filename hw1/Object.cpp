@@ -98,12 +98,12 @@ Object::SetCenterSize(float *center, float *size) {
     float max[3] = {-FLT_MAX, -FLT_MAX, -FLT_MAX};
 
     foreach(Vertex * v, vertices) {
-            min[0] = std::min(min[0], v->val.x);
-            max[0] = std::max(max[0], v->val.x);
-            min[1] = std::min(min[1], v->val.y);
-            max[1] = std::max(max[1], v->val.y);
-            min[2] = std::min(min[2], v->val.z);
-            max[2] = std::max(max[2], v->val.z);
+            min[0] = std::min(min[0], v->dstval.x);
+            max[0] = std::max(max[0], v->dstval.x);
+            min[1] = std::min(min[1], v->dstval.y);
+            max[1] = std::max(max[1], v->dstval.y);
+            min[2] = std::min(min[2], v->dstval.z);
+            max[2] = std::max(max[2], v->dstval.z);
     }
 
     *size = 0.0f;
@@ -227,9 +227,9 @@ Face::Face() : edge(NULL)
 
 vec3
 Face::Normal() {
-    vec3& v0 = this->edge->v->val;
-    vec3& v1 = this->edge->next->v->val;
-    vec3& v2 = this->edge->next->next->v->val;
+    vec3 v0 = this->edge->v->Position();
+    vec3 v1 = this->edge->next->v->Position();
+    vec3 v2 = this->edge->next->next->v->Position();
     return normalize( cross(v2-v1, v1-v0) );
 }
 
@@ -245,12 +245,10 @@ Face::Render() {
 bool
 Vertex::Render() {
 
-    vec3 offset = (srcval-dstval) * vec3((float)framesleft/ (float)N_FRAMES_PER_SPLIT);
-    vec3 currentval = dstval + offset;
-
-    vec3 norm = this->Normal();
+    vec3 pos = this->Position(),
+         norm = this->Normal();
     glNormal3fv( (GLfloat*) &norm  );
-    glVertex3fv( (GLfloat*) &currentval );
+    glVertex3fv( (GLfloat*) &pos );
 
     if (framesleft > 0)
         framesleft -= 1;
@@ -309,10 +307,10 @@ Object::DrawNormals(int vNorms, int fNorms) {
     Vertex *v0 = h->v,
            *v1 = h->oppv();
     vec3 enorm = vec3(0.01f) * normalize(v0->Normal() + v1->Normal());
-    vec3  ur = v0->val + enorm,
-          ul = v1->val + enorm,
-          lr = v0->val - enorm,
-          ll = v1->val - enorm;
+    vec3  ur = v0->Position() + enorm,
+          ul = v1->Position() + enorm,
+          lr = v0->Position() - enorm,
+          ll = v1->Position() - enorm;
     glColor3f(0.0f, 1.0f, 0.0f);
     glBegin(GL_QUADS);
     glVertex3fv( (GLfloat*) &ur );
@@ -324,16 +322,18 @@ Object::DrawNormals(int vNorms, int fNorms) {
 
 void
 Vertex::DrawNormal() {
-    vec3 normal = vec3(0.5f) * normalize( Normal() );
-    vec3 end = val + normal;
+    vec3 norm = vec3(0.5f) * normalize( Normal() );
+    vec3 pos = Position();
+    vec3 end = pos + norm;
 
-    glVertex3fv( (GLfloat*) &val);
+    glVertex3fv( (GLfloat*) &pos );
     glVertex3fv( (GLfloat*) &end );
 }
 
 void
 Face::DrawNormal() {
-    vec3 centroid = vec3(1.0/3.0) * (edge->v->val + edge->next->v->val + edge->next->next->v->val);
+    vec3 centroid = vec3(1.0/3.0) *
+        (edge->v->Position()+ edge->next->v->Position()+ edge->next->next->v->Position());
     vec3 normal = vec3(0.5f) * normalize( Normal() );
     vec3 end = centroid + normal;
 
@@ -403,7 +403,7 @@ Object::Collapse(Hedge *e0) {
     // -------------------------------------------------------
     // make updates
 
-    midpoint->MoveTo( vec3(0.5) * (e0->v->val + e0->oppv()->val) );
+    midpoint->MoveTo( vec3(0.5) * (e0->v->dstval + e0->oppv()->dstval) );
 
     // update vertex points from edges pointing to old vertex
     foreach(Hedge* hedge, oNeighbors) {
@@ -570,7 +570,7 @@ VertexSplit::VertexSplit(Hedge *e00)
     f1 = (e10) ? e10->f: NULL;
 
     target = e00->v;
-    target_loc = target->val;
+    target_loc = target->dstval;
     newpoint = e00->oppv();
 
     targetHedges = std::set<Hedge*>(target->Hedges());
@@ -594,7 +594,7 @@ Hedge::IsDegenerate() {
     /* check if other vertex in each face is in same location */
     Vertex *v0 = this->prev()->v,
            *v1 = this->pair->prev()->v;
-    return v0->val == v1->val;;
+    return v0->dstval == v1->dstval;;
 }
 
 void
@@ -621,4 +621,9 @@ Vertex::MoveTo(vec3 dval) {
     framesleft = N_FRAMES_PER_SPLIT;
     srcval = val;
     val = dstval = dval;
+}
+
+glm::vec3
+Vertex::Position() {
+    return dstval + (srcval-dstval) * vec3((float)framesleft/ (float)N_FRAMES_PER_SPLIT);
 }
