@@ -272,7 +272,7 @@ Hedge::oppv() {
 }
 
 Vertex::Vertex(vec3 val) : edge(NULL), child(NULL),
-    val(val), dstval(val), srcval(val), framesleft(0)
+    dstval(val), srcval(val), framesleft(0)
 { }
 
 void
@@ -618,9 +618,9 @@ Object::Split(bool many) {
 
 void
 Vertex::MoveTo(vec3 dval) {
+    srcval = Position();
+    dstval = dval;
     framesleft = N_FRAMES_PER_SPLIT;
-    srcval = val;
-    val = dstval = dval;
 }
 
 glm::vec3
