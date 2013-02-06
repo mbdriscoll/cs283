@@ -464,7 +464,6 @@ Vertex::Hedges() {
     for(e = edge->next->pair; e != NULL && e != edge; e=e->next->pair) {
         DEBUG_ASSERT(e->next->v == this);
         DEBUG_ASSERT(hedges.find(e->next) == hedges.end());
-        //printf("f");
         hedges.insert(e->next);
     }
 
@@ -473,14 +472,13 @@ Vertex::Hedges() {
         for(e = edge->pair; e != NULL && e->prev() != edge; e=e->prev()->pair) {
             DEBUG_ASSERT(e->v == this);
             DEBUG_ASSERT(hedges.find(e) == hedges.end());
-            //printf("b");
             hedges.insert(e);
         }
 
-    //printf("\n");
     return hedges;
 }
 
 void
 Object::Split(VertexSplit& state) {
+
 }

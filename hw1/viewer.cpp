@@ -88,6 +88,7 @@ initializeShape(const char* input_filename) {
 
     g_model = new Object(input_file);
     g_model->SetCenterSize((float*) &g_center, &g_size);
+    vsplits.reserve(g_model->vertices.size());
 
     fclose(input_file);
 
