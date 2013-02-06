@@ -338,6 +338,9 @@ Object::Collapse(int nedges) {
         Hedge *e0 = GetHedgeToCollapse();
         Hedge *e1 = e0->pair;
 
+        // -------------------------------------------------------
+        // save state
+
         Face *f0 = e0->f,
              *f1 = (e1) ? e1->f : NULL;
 
@@ -364,6 +367,18 @@ Object::Collapse(int nedges) {
         set<Hedge*> mNeighbors = midpoint->Hedges(),
                     oNeighbors = oldpoint->Hedges();
 
+        set<Hedge*> va_candidates = vA->Hedges();
+        set<Hedge*> vb_candidates = vB->Hedges();
+        set<Hedge*> candidates;
+        bool delete_mp = false,
+             delete_va = false,
+             delete_vb = false;
+        candidates.insert(mNeighbors.begin(), mNeighbors.end());
+        candidates.insert(oNeighbors.begin(), oNeighbors.end());
+
+        // -------------------------------------------------------
+        // make updates
+
         // update vertex points from edges pointing to old vertex
         foreach(Hedge* hedge, oNeighbors) {
 #if DEBUG
@@ -385,13 +400,7 @@ Object::Collapse(int nedges) {
         assert( midpoint->edge != e12 );
         assert( midpoint->edge != e00 );
         assert( midpoint->edge != e01 );
-#endif
-        set<Hedge*> candidates;
-        bool delete_mp = false;
-        candidates.insert(mNeighbors.begin(), mNeighbors.end());
-        candidates.insert(oNeighbors.begin(), oNeighbors.end());
 
-#if DEBUG
         assert(mNeighbors.find(e11) != mNeighbors.end());
         assert(mNeighbors.find(e10) == mNeighbors.end());
         assert(mNeighbors.find(e12) == mNeighbors.end());
@@ -408,6 +417,10 @@ Object::Collapse(int nedges) {
 
         foreach(Hedge* h, candidates)
             assert(h->v == midpoint);
+        foreach(Hedge* h, va_candidates)
+            assert(h->v == vA);
+        foreach(Hedge* h, vb_candidates)
+            assert(h->v == vB);
 #endif
 
         candidates.erase(e11);
@@ -424,9 +437,7 @@ Object::Collapse(int nedges) {
             delete_mp = true;
         }
 
-        bool delete_va = false;
         if (vA && vA->edge == e01) {
-            set<Hedge*> va_candidates = vA->Hedges();
             va_candidates.erase(e02);
             if (va_candidates.size() > 0) {
                 Hedge *newe = *(va_candidates.begin());
@@ -436,9 +447,7 @@ Object::Collapse(int nedges) {
             }
         }
 
-        bool delete_vb = false;
         if (vB && vB->edge == e11) {
-            set<Hedge*> vb_candidates = vB->Hedges();
             vb_candidates.erase(e12);
             if (vb_candidates.size() > 0) {
                 Hedge *newe = *(vb_candidates.begin());
