@@ -7,6 +7,12 @@
 
 #define DEBUG 1
 
+#if DEBUG
+    #define DEBUG_ASSERT(cnd) assert((cnd));
+#else
+    #define DEBUG_ASSERT(cmd) {};
+#endif
+
 using namespace glm;
 using namespace std;
 
@@ -80,9 +86,7 @@ Object::Object(FILE* input) {
     foreach (Hedge* h, this->hedges)
         h->pair = vtoe[VVpair(h->oppv(),h->v)];
 
-#if DEBUG
-    this->check();
-#endif
+    DEBUG_ASSERT( this->check() );
 }
 
 void
@@ -116,7 +120,8 @@ Object::Render() {
     glEnd();
 }
 
-void Object::check() {
+int Object::check() {
+
     int num_boundaries = 0;
     int hno = 0;
     foreach(Hedge* h, this->hedges) {
@@ -203,6 +208,8 @@ void Object::check() {
             (int) faces.size(),
             (int) hedges.size(),
             num_boundaries);
+
+    return 1;
 }
 
 Hedge::Hedge(Vertex *v, Hedge *next, Face *f) :
@@ -381,9 +388,7 @@ Object::Collapse(int nedges) {
 
         // update vertex points from edges pointing to old vertex
         foreach(Hedge* hedge, oNeighbors) {
-#if DEBUG
-            assert(hedge->v == oldpoint);
-#endif
+            DEBUG_ASSERT(hedge->v == oldpoint);
             hedge->v = midpoint;
         }
 
@@ -474,9 +479,7 @@ Object::Collapse(int nedges) {
         if (delete_va) vertices.erase(vA);
         if (delete_vb) vertices.erase(vB);
 
-#if DEBUG
         this->check();
-#endif
     }
 }
 
@@ -488,8 +491,8 @@ Vertex::Hedges() {
 
     // forward around vertex
     for(e = edge->next->pair; e != NULL && e != edge; e=e->next->pair) {
-        assert(e->next->v == this);
-        assert(hedges.find(e->next) == hedges.end());
+        DEBUG_ASSERT(e->next->v == this);
+        DEBUG_ASSERT(hedges.find(e->next) == hedges.end());
         //printf("f");
         hedges.insert(e->next);
     }
@@ -497,8 +500,8 @@ Vertex::Hedges() {
     // backward around vertex
     if (e == NULL)
         for(e = edge->pair; e != NULL && e->prev() != edge; e=e->prev()->pair) {
-            assert(e->v == this);
-            assert(hedges.find(e) == hedges.end());
+            DEBUG_ASSERT(e->v == this);
+            DEBUG_ASSERT(hedges.find(e) == hedges.end());
             //printf("b");
             hedges.insert(e);
         }

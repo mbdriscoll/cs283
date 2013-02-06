@@ -59,6 +59,6 @@ public:
     void Collapse(int nedges);
     Hedge* GetHedgeToCollapse();
 
-    void check();
+    int check();
     void match_pairs();
 };
