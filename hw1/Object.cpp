@@ -503,6 +503,8 @@ VertexSplit::Apply(Object* o) {
     /* set vertex->edge pointers */
     target->edge = e02;
     newpoint->edge = e00;
+    if (vA) vA->edge = e01;
+    if (vB) vB->edge = e11;
 
     /* register primitives with Object */
     o->hedges.insert(e00);
