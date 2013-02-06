@@ -10,7 +10,8 @@ class Vertex {
 public:
     glm::vec3 val; // current location of vertex
     glm::vec3 srcval; // starting location of vertex
-    glm::vec3 dstval; // ending location of vertex 
+    glm::vec3 dstval; // ending location of vertex
+    int framesleft; // number of remaining animation frames
     Hedge* edge;
     Vertex* child;
 

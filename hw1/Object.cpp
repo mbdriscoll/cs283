@@ -244,14 +244,18 @@ Face::Render() {
 
 bool
 Vertex::Render() {
-    if (val != dstval)
-        val += (dstval-srcval) / vec3((float) N_FRAMES_PER_SPLIT);
+
+    vec3 offset = (srcval-dstval) * vec3((float)framesleft/ (float)N_FRAMES_PER_SPLIT);
+    vec3 currentval = dstval + offset;
 
     vec3 norm = this->Normal();
     glNormal3fv( (GLfloat*) &norm  );
-    glVertex3fv( (GLfloat*) &val );
+    glVertex3fv( (GLfloat*) &currentval );
 
-    return val == dstval;
+    if (framesleft > 0)
+        framesleft -= 1;
+
+    return framesleft == 0;
 }
 
 bool
@@ -269,7 +273,8 @@ Hedge::oppv() {
     return this->next->v;
 }
 
-Vertex::Vertex(vec3 val) : edge(NULL), child(NULL), val(val), dstval(val), srcval(val)
+Vertex::Vertex(vec3 val) : edge(NULL), child(NULL),
+    val(val), dstval(val), srcval(val), framesleft(0)
 { }
 
 void
@@ -613,5 +618,7 @@ Object::Split(bool many) {
 
 void
 Vertex::MoveTo(vec3 dval) {
-    srcval = dstval = val = dval;
+    framesleft = N_FRAMES_PER_SPLIT;
+    srcval = val;
+    val = dstval = dval;
 }
