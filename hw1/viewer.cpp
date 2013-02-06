@@ -94,12 +94,6 @@ initializeShape(const char* input_filename) {
 
 //------------------------------------------------------------------------------
 static void
-updateGeom() {
-    g_model->Render();
-}
-
-//------------------------------------------------------------------------------
-static void
 display() {
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -342,8 +336,10 @@ idle() {
     if (not g_freeze)
         g_frame++;
 
+    bool doneAnimating = g_model->Render();
+
     /* 0: do nothing.   1: do splits   -1: do pops  */
-    if (g_animate != 0) {
+    if (doneAnimating && g_animate != 0) {
         if (g_model->vsplits.size() == 0) g_animate = -1;
         if (g_model->faces.size() <= 2)   g_animate =  1;
 
@@ -353,7 +349,6 @@ idle() {
             g_model->Pop();
     }
 
-    updateGeom();
     glutPostRedisplay();
 
     if (g_repeatCount != 0 and g_frame >= g_repeatCount)

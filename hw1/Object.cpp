@@ -114,12 +114,16 @@ Object::SetCenterSize(float *center, float *size) {
     *size = sqrtf(*size);
 }
 
-void
+bool
 Object::Render() {
+    bool done = true;
+
     glBegin(GL_TRIANGLES);
     foreach(Face* f, faces)
-        f->Render();
+        done &= f->Render();
     glEnd();
+
+    return done;
 }
 
 int Object::check() {
@@ -229,23 +233,30 @@ Face::Normal() {
     return normalize( cross(v2-v1, v1-v0) );
 }
 
-void
+bool
 Face::Render() {
-    this->edge->Render();
-    this->edge->next->Render();
-    this->edge->next->next->Render();
+    bool done = true;
+    done &= this->edge->Render();
+    done &= this->edge->next->Render();
+    done &= this->edge->next->next->Render();
+    return done;
 }
 
-void
+bool
 Vertex::Render() {
+    //if (any( greaterThan( abs(val-dstval), vec3(0.000001f)) ) )
+        //val += (dstval-srcval) / vec3((float) N_FRAMES_PER_SPLIT);
+
     vec3 norm = this->Normal();
     glNormal3fv( (GLfloat*) &norm  );
     glVertex3fv( (GLfloat*) &val );
+
+    return true;
 }
 
-void
+bool
 Hedge::Render() {
-    v->Render();
+    return v->Render();
 }
 
 inline Hedge*
@@ -258,7 +269,7 @@ Hedge::oppv() {
     return this->next->v;
 }
 
-Vertex::Vertex(vec3 val) : edge(NULL), child(NULL), val(val)
+Vertex::Vertex(vec3 val) : edge(NULL), child(NULL), val(val), dstval(val), srcval(val)
 { }
 
 void
@@ -387,7 +398,7 @@ Object::Collapse(Hedge *e0) {
     // -------------------------------------------------------
     // make updates
 
-    midpoint->val = vec3(0.5) * (e0->v->val + e0->oppv()->val);
+    midpoint->MoveTo( vec3(0.5) * (e0->v->val + e0->oppv()->val) );
 
     // update vertex points from edges pointing to old vertex
     foreach(Hedge* hedge, oNeighbors) {
@@ -498,7 +509,7 @@ VertexSplit::Apply(Object* o) {
     if (degenA) degenA->Apply(o);
 
     /* move target to original location */
-    target->val = target_loc;
+    target->MoveTo(target_loc);
 
     /* fix hedge->vertex pointers */
 #if DEBUG
@@ -598,4 +609,9 @@ Object::Split(bool many) {
         delete vsplits.back();
         vsplits.pop_back();
     }
+}
+
+void
+Vertex::MoveTo(vec3 dval) {
+    srcval = dstval = val = dval;
 }

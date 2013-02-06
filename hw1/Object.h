@@ -8,16 +8,19 @@ class VertexSplit;
 
 class Vertex {
 public:
-    glm::vec3 val;
+    glm::vec3 val; // current location of vertex
+    glm::vec3 srcval; // starting location of vertex
+    glm::vec3 dstval; // ending location of vertex 
     Hedge* edge;
     Vertex* child;
 
     Vertex(glm::vec3 val);
     int valence();
 
-    void Render();
+    bool Render();
     glm::vec3 Normal();
     void DrawNormal();
+    void MoveTo(glm::vec3 dstval);
     std::set<Hedge*> Hedges();
 };
 
@@ -26,7 +29,7 @@ public:
     Hedge* edge;
 
     Face();
-    void Render();
+    bool Render();
     void DrawNormal();
     glm::vec3 Normal();
 };
@@ -43,7 +46,7 @@ public:
     Vertex* oppv();
 
     void set_pair(Hedge* o);
-    void Render();
+    bool Render();
     bool IsDegenerate();
 };
 
@@ -56,7 +59,7 @@ public:
     std::vector<VertexSplit*> vsplits;
 
     Object(FILE* inputfile);
-    void Render();
+    bool Render();
     void DrawNormals(int vNorms, int fNorms);
     void SetCenterSize(float *center, float *size);
     VertexSplit* CollapseNext();
