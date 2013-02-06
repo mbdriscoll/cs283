@@ -378,6 +378,7 @@ Object::Collapse(int nedges) {
         if (e11 && e11->pair) e11->pair->pair = (e12) ? e12->pair : NULL;
         if (e12 && e12->pair) e12->pair->pair = (e11) ? e11->pair : NULL;
 
+
         // make sure midpoint.edge is still accurate
 #if DEBUG
         assert( midpoint->edge != e11 );
@@ -389,11 +390,34 @@ Object::Collapse(int nedges) {
         bool delete_mp = false;
         candidates.insert(mNeighbors.begin(), mNeighbors.end());
         candidates.insert(oNeighbors.begin(), oNeighbors.end());
-        candidates.erase(e00); candidates.erase(e10);
-        candidates.erase(e01); candidates.erase(e11);
-        candidates.erase(e02); candidates.erase(e12);
+
+#if DEBUG
+        assert(mNeighbors.find(e11) != mNeighbors.end());
+        assert(mNeighbors.find(e10) == mNeighbors.end());
+        assert(mNeighbors.find(e12) == mNeighbors.end());
+        assert(mNeighbors.find(e01) == mNeighbors.end());
+        assert(mNeighbors.find(e00) != mNeighbors.end());
+        assert(mNeighbors.find(e02) == mNeighbors.end());
+
+        assert(oNeighbors.find(e01) != oNeighbors.end());
+        assert(oNeighbors.find(e00) == oNeighbors.end());
+        assert(oNeighbors.find(e02) == oNeighbors.end());
+        assert(oNeighbors.find(e11) == oNeighbors.end());
+        assert(oNeighbors.find(e10) != oNeighbors.end());
+        assert(oNeighbors.find(e12) == oNeighbors.end());
+
+        foreach(Hedge* h, candidates)
+            assert(h->v == midpoint);
+#endif
+
+        candidates.erase(e11);
+        candidates.erase(e01);
+        candidates.erase(e00);
+        candidates.erase(e10);
+
         if (candidates.size() > 0) {
             Hedge *newe = *(candidates.begin());
+            assert( newe->v == midpoint );
             midpoint->edge = newe->prev();
             assert( newe->v != newe->oppv() );
         } else {
@@ -434,7 +458,6 @@ Object::Collapse(int nedges) {
         if (e11) hedges.erase(e11);
         if (e12) hedges.erase(e12);
 
-        printf("Deleted vA: %d  vB: %d  mp: %d\n", delete_va, delete_vb, delete_mp);
         vertices.erase(oldpoint);
         if (delete_mp) vertices.erase(midpoint);
         if (delete_va) vertices.erase(vA);
@@ -454,28 +477,21 @@ Vertex::Hedges() {
 
     // forward around vertex
     for(e = edge->next->pair; e != NULL && e != edge; e=e->next->pair) {
-#if DEBUG
         assert(e->next->v == this);
         assert(hedges.find(e->next) == hedges.end());
         //printf("f");
-#endif
         hedges.insert(e->next);
     }
 
     // backward around vertex
     if (e == NULL)
         for(e = edge->pair; e != NULL && e->prev() != edge; e=e->prev()->pair) {
-#if DEBUG
             assert(e->v == this);
             assert(hedges.find(e) == hedges.end());
             //printf("b");
-#endif
             hedges.insert(e);
         }
 
-#if DEBUG
     //printf("\n");
-#endif
-
     return hedges;
 }
