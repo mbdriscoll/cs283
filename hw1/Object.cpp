@@ -396,11 +396,6 @@ Object::Collapse(int nedges) {
 
         // make sure midpoint.edge is still accurate
 #if DEBUG
-        assert( midpoint->edge != e11 );
-        assert( midpoint->edge != e12 );
-        assert( midpoint->edge != e00 );
-        assert( midpoint->edge != e01 );
-
         assert(mNeighbors.find(e11) != mNeighbors.end());
         assert(mNeighbors.find(e10) == mNeighbors.end());
         assert(mNeighbors.find(e12) == mNeighbors.end());
@@ -436,6 +431,13 @@ Object::Collapse(int nedges) {
         } else {
             delete_mp = true;
         }
+
+#if DEBUG
+        assert( midpoint->edge != e11 );
+        assert( midpoint->edge != e12 );
+        assert( midpoint->edge != e00 );
+        assert( midpoint->edge != e01 );
+#endif
 
         if (vA && vA->edge == e01) {
             va_candidates.erase(e02);
