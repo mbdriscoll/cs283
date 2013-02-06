@@ -264,8 +264,11 @@ keyboard(unsigned char key, int x, int y) {
         case 'q': quit();
         case 'f': fitFrame(); break;
         case '\t': toggleFullScreen(); break;
-        case '-': g_model->Collapse(1); break;
-        case '_': g_model->Collapse((int) (0.1f * (float) g_model->vertices.size())); break;
+        case '-': g_model->Collapse(); break;
+        case '_':
+             for(int i = 0; i < (int) (0.1f * (float) g_model->vertices.size()); i++)
+                 g_model->Collapse();
+             break;
         case 0x1b: g_hud.SetVisible(!g_hud.IsVisible()); break;
     }
 }

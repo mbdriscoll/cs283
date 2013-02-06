@@ -6,7 +6,7 @@
 
 #include "Object.h"
 
-#define DEBUG 0
+#define DEBUG 1
 
 #if DEBUG
     #define DEBUG_ASSERT(cnd) assert((cnd));
@@ -342,115 +342,113 @@ Object::GetHedgeToCollapse() {
 }
 
 void
-Object::Collapse(int nedges) {
-    for (int i = 0; i < nedges; i++) {
-        Hedge *e0 = GetHedgeToCollapse();
-        Hedge *e1 = e0->pair;
+Object::Collapse() {
+    Hedge *e0 = GetHedgeToCollapse();
+    Hedge *e1 = e0->pair;
 
-        // -------------------------------------------------------
-        // save state
+    // -------------------------------------------------------
+    // save state
 
-        Face *f0 = e0->f,
-             *f1 = (e1) ? e1->f : NULL;
+    Face *f0 = e0->f,
+         *f1 = (e1) ? e1->f : NULL;
 
-        Hedge *e00 = e0,
-              *e01 = e0->next,
-              *e02 = e0->next->next,
-              *e10 = e0->pair,
-              *e11 = (e10) ? e10->next : NULL,
-              *e12 = (e11) ? e11->next : NULL;
+    Hedge *e00 = e0,
+          *e01 = e0->next,
+          *e02 = e0->next->next,
+          *e10 = e0->pair,
+          *e11 = (e10) ? e10->next : NULL,
+          *e12 = (e11) ? e11->next : NULL;
 
-        Face *f01 = (e0->next->pair)             ? e0->next->pair->f       : NULL,
-             *f02 = (e0->next->next->pair)       ? e0->next->next->pair->f : NULL,
-             *f11 = (e1 && e1->next->pair)       ? e1->next->pair->f       : NULL,
-             *f12 = (e1 && e1->next->next->pair) ? e1->next->next->pair->f : NULL;
+    Face *f01 = (e0->next->pair)             ? e0->next->pair->f       : NULL,
+         *f02 = (e0->next->next->pair)       ? e0->next->next->pair->f : NULL,
+         *f11 = (e1 && e1->next->pair)       ? e1->next->pair->f       : NULL,
+         *f12 = (e1 && e1->next->next->pair) ? e1->next->next->pair->f : NULL;
 
-        Vertex *midpoint = e0->v,
-               *oldpoint = e0->oppv(),
-               *vA = (e00) ? e00->prev()->v : NULL,
-               *vB = (e10) ? e10->prev()->v : NULL;
+    Vertex *midpoint = e0->v,
+           *oldpoint = e0->oppv(),
+           *vA = (e00) ? e00->prev()->v : NULL,
+           *vB = (e10) ? e10->prev()->v : NULL;
 
-        midpoint->val = vec3(0.5) * (e0->v->val + e0->oppv()->val);
+    midpoint->val = vec3(0.5) * (e0->v->val + e0->oppv()->val);
 
 
-        set<Hedge*> mNeighbors = midpoint->Hedges(),
-                    oNeighbors = oldpoint->Hedges();
+    set<Hedge*> mNeighbors = midpoint->Hedges(),
+        oNeighbors = oldpoint->Hedges();
 
-        bool delete_mp = false,
-             delete_va = false,
-             delete_vb = false;
+    bool delete_mp = false,
+         delete_va = false,
+         delete_vb = false;
 
-        // -------------------------------------------------------
-        // make updates
+    // -------------------------------------------------------
+    // make updates
 
-        // update vertex points from edges pointing to old vertex
-        foreach(Hedge* hedge, oNeighbors) {
-            DEBUG_ASSERT(hedge->v == oldpoint);
-            hedge->v = midpoint;
-        }
+    // update vertex points from edges pointing to old vertex
+    foreach(Hedge* hedge, oNeighbors) {
+        DEBUG_ASSERT(hedge->v == oldpoint);
+        hedge->v = midpoint;
+    }
 
-        // fix up pairs
-        if (e01 && e01->pair) e01->pair->pair = (e02) ? e02->pair : NULL;
-        if (e02 && e02->pair) e02->pair->pair = (e01) ? e01->pair : NULL;
-        if (e11 && e11->pair) e11->pair->pair = (e12) ? e12->pair : NULL;
-        if (e12 && e12->pair) e12->pair->pair = (e11) ? e11->pair : NULL;
+    // fix up pairs
+    if (e01 && e01->pair) e01->pair->pair = (e02) ? e02->pair : NULL;
+    if (e02 && e02->pair) e02->pair->pair = (e01) ? e01->pair : NULL;
+    if (e11 && e11->pair) e11->pair->pair = (e12) ? e12->pair : NULL;
+    if (e12 && e12->pair) e12->pair->pair = (e11) ? e11->pair : NULL;
 
 
 #if DEBUG
-        assert(mNeighbors.find(e11) != mNeighbors.end());
-        assert(mNeighbors.find(e10) == mNeighbors.end());
-        assert(mNeighbors.find(e12) == mNeighbors.end());
-        assert(mNeighbors.find(e01) == mNeighbors.end());
-        assert(mNeighbors.find(e00) != mNeighbors.end());
-        assert(mNeighbors.find(e02) == mNeighbors.end());
+    assert(mNeighbors.find(e11) != mNeighbors.end());
+    assert(mNeighbors.find(e10) == mNeighbors.end());
+    assert(mNeighbors.find(e12) == mNeighbors.end());
+    assert(mNeighbors.find(e01) == mNeighbors.end());
+    assert(mNeighbors.find(e00) != mNeighbors.end());
+    assert(mNeighbors.find(e02) == mNeighbors.end());
 
-        assert(oNeighbors.find(e01) != oNeighbors.end());
-        assert(oNeighbors.find(e00) == oNeighbors.end());
-        assert(oNeighbors.find(e02) == oNeighbors.end());
-        assert(oNeighbors.find(e11) == oNeighbors.end());
-        assert(oNeighbors.find(e10) != oNeighbors.end());
-        assert(oNeighbors.find(e12) == oNeighbors.end());
+    assert(oNeighbors.find(e01) != oNeighbors.end());
+    assert(oNeighbors.find(e00) == oNeighbors.end());
+    assert(oNeighbors.find(e02) == oNeighbors.end());
+    assert(oNeighbors.find(e11) == oNeighbors.end());
+    assert(oNeighbors.find(e10) != oNeighbors.end());
+    assert(oNeighbors.find(e12) == oNeighbors.end());
 #endif
 
-        // make sure midpoint.edge is still accurate
-        if      (e11 && e11->pair) midpoint->edge = e11->pair;
-        else if (e02 && e02->pair) midpoint->edge = e02->pair->prev();
-        else if (e01 && e01->pair) midpoint->edge = e01->pair;
-        else if (e12 && e12->pair) midpoint->edge = e12->pair->prev();
-        else    delete_mp = true;
+    // make sure midpoint.edge is still accurate
+    if      (e11 && e11->pair) midpoint->edge = e11->pair;
+    else if (e02 && e02->pair) midpoint->edge = e02->pair->prev();
+    else if (e01 && e01->pair) midpoint->edge = e01->pair;
+    else if (e12 && e12->pair) midpoint->edge = e12->pair->prev();
+    else    delete_mp = true;
 
-        // make sure vA.edge is still accurate
-        if (vA && vA->edge == e01) {
-            if      (e02 && e02->pair) vA->edge = e02->pair;
-            else if (e01 && e01->pair) vA->edge = e01->pair->prev();
-            else    delete_va = true;
-        }
-
-        // make sure vB.edge is still accurate
-        if (vB && vB->edge == e11) {
-            if      (e12 && e12->pair) vB->edge = e12->pair;
-            else if (e11 && e11->pair) vB->edge = e11->pair->prev();
-            else    delete_vb = true;
-        }
-
-        // remove geom from f/v/e sets
-        if (f0) faces.erase(f0);
-        if (f1) faces.erase(f1);
-
-        if (e00) hedges.erase(e00);
-        if (e01) hedges.erase(e01);
-        if (e02) hedges.erase(e02);
-        if (e10) hedges.erase(e10);
-        if (e11) hedges.erase(e11);
-        if (e12) hedges.erase(e12);
-
-        vertices.erase(oldpoint);
-        if (delete_mp) vertices.erase(midpoint);
-        if (delete_va) vertices.erase(vA);
-        if (delete_vb) vertices.erase(vB);
-
-        DEBUG_ASSERT( this->check() );
+    // make sure vA.edge is still accurate
+    if (vA && vA->edge == e01) {
+        if      (e02 && e02->pair) vA->edge = e02->pair;
+        else if (e01 && e01->pair) vA->edge = e01->pair->prev();
+        else    delete_va = true;
     }
+
+    // make sure vB.edge is still accurate
+    if (vB && vB->edge == e11) {
+        if      (e12 && e12->pair) vB->edge = e12->pair;
+        else if (e11 && e11->pair) vB->edge = e11->pair->prev();
+        else    delete_vb = true;
+    }
+
+    // remove geom from f/v/e sets
+    if (f0) faces.erase(f0);
+    if (f1) faces.erase(f1);
+
+    if (e00) hedges.erase(e00);
+    if (e01) hedges.erase(e01);
+    if (e02) hedges.erase(e02);
+    if (e10) hedges.erase(e10);
+    if (e11) hedges.erase(e11);
+    if (e12) hedges.erase(e12);
+
+    vertices.erase(oldpoint);
+    if (delete_mp) vertices.erase(midpoint);
+    if (delete_va) vertices.erase(vA);
+    if (delete_vb) vertices.erase(vB);
+
+    DEBUG_ASSERT( this->check() );
 }
 
 set<Hedge*>

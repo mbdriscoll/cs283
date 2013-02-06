@@ -56,7 +56,7 @@ public:
     void Render();
     void DrawNormals(int vNorms, int fNorms);
     void SetCenterSize(float *center, float *size);
-    void Collapse(int nedges);
+    void Collapse();
     Hedge* GetHedgeToCollapse();
 
     int check();
