@@ -374,8 +374,6 @@ Object::Collapse(int nedges) {
         set<Hedge*> mNeighbors = midpoint->Hedges(),
                     oNeighbors = oldpoint->Hedges();
 
-        set<Hedge*> va_candidates = vA->Hedges();
-        set<Hedge*> vb_candidates = vB->Hedges();
         set<Hedge*> candidates;
         bool delete_mp = false,
              delete_va = false,
@@ -417,10 +415,6 @@ Object::Collapse(int nedges) {
 
         foreach(Hedge* h, candidates)
             assert(h->v == midpoint);
-        foreach(Hedge* h, va_candidates)
-            assert(h->v == vA);
-        foreach(Hedge* h, vb_candidates)
-            assert(h->v == vB);
 #endif
 
         candidates.erase(e11);
@@ -437,41 +431,16 @@ Object::Collapse(int nedges) {
             delete_mp = true;
         }
 
-#if DEBUG
-        assert( midpoint->edge != e11 );
-        assert( midpoint->edge != e12 );
-        assert( midpoint->edge != e00 );
-        assert( midpoint->edge != e01 );
-#endif
-
         if (vA && vA->edge == e01) {
             if      (e02 && e02->pair) vA->edge = e02->pair;
             else if (e01 && e01->pair) vA->edge = e01->pair->prev();
             else    delete_va = true;
         }
-#if 0
-            va_candidates.erase(e02);
-            if (va_candidates.size() > 0) {
-                Hedge *newe = *(va_candidates.begin());
-                vA->edge = newe->prev();
-                printf("foo1\n");
-            } else {
-                printf("foo2\n");
-                delete_va = true;
-            }
-        }
-#endif
 
         if (vB && vB->edge == e11) {
-            vb_candidates.erase(e12);
-            if (vb_candidates.size() > 0) {
-                Hedge *newe = *(vb_candidates.begin());
-                vB->edge = newe->prev();
-                printf("foo3\n");
-            } else {
-                delete_vb = true;
-                printf("foo4\n");
-            }
+            if      (e12 && e12->pair) vB->edge = e12->pair;
+            else if (e11 && e11->pair) vB->edge = e11->pair->prev();
+            else    delete_vb = true;
         }
 
         if (f0) faces.erase(f0);
