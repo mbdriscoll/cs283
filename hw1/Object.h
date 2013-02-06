@@ -44,6 +44,7 @@ public:
 
     void set_pair(Hedge* o);
     void Render();
+    bool IsDegenerate();
 };
 
 
@@ -57,7 +58,8 @@ public:
     void Render();
     void DrawNormals(int vNorms, int fNorms);
     void SetCenterSize(float *center, float *size);
-    VertexSplit Collapse();
+    VertexSplit* CollapseNext();
+    VertexSplit* Collapse(Hedge* e);
     Hedge* GetHedgeToCollapse();
 
     int check();
@@ -76,4 +78,7 @@ class VertexSplit {
 
     VertexSplit(Hedge *e00);
     void Apply(Object* o);
+
+    VertexSplit *degenA;
+    VertexSplit *degenB;
 };

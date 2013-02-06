@@ -38,7 +38,7 @@ int   g_width = 1024,
 GLhud g_hud;
 
 // geometry
-std::vector<VertexSplit> vsplits;
+std::vector<VertexSplit*> vsplits;
 
 #if 0
 GLuint g_transformUB = 0,
@@ -271,7 +271,7 @@ keyboard(unsigned char key, int x, int y) {
                       int npops = (key == '-') ? 1 : (int) (0.2f * (float) g_model->faces.size());
                       npops = std::min(npops, (int) g_model->faces.size() - 2);
                       for(int i = 0; i < npops; i++)
-                          vsplits.push_back(g_model->Collapse());
+                          vsplits.push_back(g_model->CollapseNext());
                       break;
                   }
 
@@ -281,7 +281,8 @@ keyboard(unsigned char key, int x, int y) {
                       int nsplits = (key == '=') ? 1 : (int) (0.2f * (float) vsplits.size());
                       nsplits = std::min(nsplits, (int) vsplits.size());
                       for(int i = 0; i < nsplits; i++) {
-                          vsplits.back().Apply(g_model);
+                          vsplits.back()->Apply(g_model);
+                          delete vsplits.back();
                           vsplits.pop_back();
                       }
                       break;

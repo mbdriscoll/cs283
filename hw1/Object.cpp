@@ -341,9 +341,14 @@ Object::GetHedgeToCollapse() {
     return *(hedges.begin());
 }
 
-VertexSplit
-Object::Collapse() {
+VertexSplit*
+Object::CollapseNext() {
     Hedge *e0 = GetHedgeToCollapse();
+    return this->Collapse(e0);
+}
+
+VertexSplit*
+Object::Collapse(Hedge *e0) {
     Hedge *e1 = e0->pair;
 
     // -------------------------------------------------------
@@ -376,7 +381,7 @@ Object::Collapse() {
          delete_va = false,
          delete_vb = false;
 
-    VertexSplit state(e00);
+    VertexSplit *state = new VertexSplit(e00);
 
     // -------------------------------------------------------
     // make updates
@@ -451,6 +456,12 @@ Object::Collapse() {
 
     DEBUG_ASSERT( this->check() );
 
+    /* collapse fins */
+    if (e01->pair && e01->pair->IsDegenerate())
+        state->degenA = this->Collapse(e01->pair);
+    if (e11->pair && e11->pair->IsDegenerate())
+        state->degenB = this->Collapse(e11->pair);
+
     return state;
 }
 
@@ -522,7 +533,8 @@ VertexSplit::Apply(Object* o) {
     if (vB) o->vertices.insert(vB);
 }
 
-VertexSplit::VertexSplit(Hedge *e00) : e00(e00) {
+VertexSplit::VertexSplit(Hedge *e00)
+    : e00(e00), degenA(NULL), degenB(NULL) {
     DEBUG_ASSERT(e00);
 
     e01 = e00->next;
@@ -545,4 +557,9 @@ VertexSplit::VertexSplit(Hedge *e00) : e00(e00) {
     /* set vA and vB only if they need to be inserted */
     vA = (e02 && e02->v->Hedges().size() == 1) ? e02->v : NULL;
     vB = (e12 && e12->v->Hedges().size() == 1) ? e12->v : NULL;
+}
+
+bool
+Hedge::IsDegenerate() {
+    return false;
 }
