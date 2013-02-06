@@ -244,14 +244,14 @@ Face::Render() {
 
 bool
 Vertex::Render() {
-    //if (any( greaterThan( abs(val-dstval), vec3(0.000001f)) ) )
-        //val += (dstval-srcval) / vec3((float) N_FRAMES_PER_SPLIT);
+    if (val != dstval)
+        val += (dstval-srcval) / vec3((float) N_FRAMES_PER_SPLIT);
 
     vec3 norm = this->Normal();
     glNormal3fv( (GLfloat*) &norm  );
     glVertex3fv( (GLfloat*) &val );
 
-    return true;
+    return val == dstval;
 }
 
 bool
