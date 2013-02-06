@@ -53,6 +53,7 @@ public:
     std::set<Face*> faces;
     std::set<Hedge*> hedges;
     std::set<Vertex*> vertices;
+    std::vector<VertexSplit*> vsplits;
 
     Object(FILE* inputfile);
     void Render();
@@ -61,6 +62,9 @@ public:
     VertexSplit* CollapseNext();
     VertexSplit* Collapse(Hedge* e);
     Hedge* GetHedgeToCollapse();
+
+    void Pop(bool many = false);
+    void Split(bool many = false);
 
     int check();
     void match_pairs();

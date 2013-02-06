@@ -40,6 +40,7 @@ Object::Object(FILE* input) {
     // temporary vector to hold indexed vertices
     vector<Vertex*> vertvec;
     vertvec.reserve(numverts);
+    vsplits.reserve(numverts);
 
     // Scan all vertices
     for(int i = 0; i < numverts; i++) {
@@ -454,13 +455,13 @@ Object::Collapse(Hedge *e0) {
     if (delete_va) vertices.erase(vA);
     if (delete_vb) vertices.erase(vB);
 
-    DEBUG_ASSERT( this->check() );
-
     /* collapse fins */
     if (e01->pair && e01->pair->IsDegenerate())
         state->degenA = this->Collapse(e01->pair);
     if (e11->pair && e11->pair->IsDegenerate())
         state->degenB = this->Collapse(e11->pair);
+
+    DEBUG_ASSERT( this->check() );
 
     return state;
 }
@@ -578,4 +579,23 @@ Hedge::IsDegenerate() {
     Vertex *v0 = this->prev()->v,
            *v1 = this->pair->prev()->v;
     return v0->val == v1->val;;
+}
+
+void
+Object::Pop(bool many) {
+    int npops = (many) ? (int) (0.2f * (float) faces.size()) : 1;
+    npops = std::min(npops, (int) faces.size() - 2);
+    for(int i = 0; i < npops; i++)
+        vsplits.push_back(this->CollapseNext());
+}
+
+void
+Object::Split(bool many) {
+    int nsplits = (many) ? (int) (0.2f * (float) vsplits.size()) : 1;
+    nsplits = std::min(nsplits, (int) vsplits.size());
+    for(int i = 0; i < nsplits; i++) {
+        vsplits.back()->Apply(this);
+        delete vsplits.back();
+        vsplits.pop_back();
+    }
 }

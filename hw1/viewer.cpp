@@ -12,6 +12,7 @@
 Object *g_model = NULL;
 
 int   g_frame = 0,
+      g_animate = 0, /* 0: do nothing.   1: do splits   -1: do pops  */
       g_repeatCount = 0;
 
 // GUI variables
@@ -36,9 +37,6 @@ int   g_width = 1024,
       g_height = 1024;
 
 GLhud g_hud;
-
-// geometry
-std::vector<VertexSplit*> vsplits;
 
 #if 0
 GLuint g_transformUB = 0,
@@ -88,7 +86,6 @@ initializeShape(const char* input_filename) {
 
     g_model = new Object(input_file);
     g_model->SetCenterSize((float*) &g_center, &g_size);
-    vsplits.reserve(g_model->vertices.size());
 
     fclose(input_file);
 
@@ -263,30 +260,16 @@ keyboard(unsigned char key, int x, int y) {
         case 'q': quit();
         case 'f': fitFrame(); break;
         case '\t': toggleFullScreen(); break;
+        case 'a': g_animate = g_animate + 1 % 2; break;
         case 0x1b: g_hud.SetVisible(!g_hud.IsVisible()); break;
 
         /* edge pops */
         case '-':
-        case '_': {
-                      int npops = (key == '-') ? 1 : (int) (0.2f * (float) g_model->faces.size());
-                      npops = std::min(npops, (int) g_model->faces.size() - 2);
-                      for(int i = 0; i < npops; i++)
-                          vsplits.push_back(g_model->CollapseNext());
-                      break;
-                  }
+        case '_': g_model->Pop(/* many = */ key == '_'); break;
 
         /* vertex splits */
         case '=':
-        case '+': {
-                      int nsplits = (key == '=') ? 1 : (int) (0.2f * (float) vsplits.size());
-                      nsplits = std::min(nsplits, (int) vsplits.size());
-                      for(int i = 0; i < nsplits; i++) {
-                          vsplits.back()->Apply(g_model);
-                          delete vsplits.back();
-                          vsplits.pop_back();
-                      }
-                      break;
-                  }
+        case '+': g_model->Split(/* many = */ key == '+'); break;
     }
 }
 
@@ -358,6 +341,17 @@ idle() {
 
     if (not g_freeze)
         g_frame++;
+
+    /* 0: do nothing.   1: do splits   -1: do pops  */
+    if (g_animate != 0) {
+        if (g_model->vsplits.size() == 0) g_animate = -1;
+        if (g_model->faces.size() <= 2)   g_animate =  1;
+
+        if (g_animate == 1)
+            g_model->Split();
+        else
+            g_model->Pop();
+    }
 
     updateGeom();
     glutPostRedisplay();
