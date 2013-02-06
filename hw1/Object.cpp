@@ -172,13 +172,14 @@ int Object::check() {
         /* membership check */
         assert( hedges.find(v->edge) != hedges.end() );
 
-        /* valence check -- expensive */
+        /* valence check -- expensive */ /*
         int expected_valence = v->Hedges().size();
         int actual_valence = 0;
         foreach(Hedge* h, hedges)
             if (h->v == v)
                 actual_valence += 1;
         assert(actual_valence == expected_valence);
+        */
 
         /* hedges make rings around vertices */
         int nring_max = 100;
@@ -444,7 +445,7 @@ Object::Collapse(int nedges) {
         if (delete_va) vertices.erase(vA);
         if (delete_vb) vertices.erase(vB);
 
-        this->check();
+        DEBUG_ASSERT( this->check() );
     }
 }
 
