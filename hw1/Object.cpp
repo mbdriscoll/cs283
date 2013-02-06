@@ -341,7 +341,7 @@ Object::GetHedgeToCollapse() {
     return *(hedges.begin());
 }
 
-void
+VertexSplit
 Object::Collapse() {
     Hedge *e0 = GetHedgeToCollapse();
     Hedge *e1 = e0->pair;
@@ -369,9 +369,6 @@ Object::Collapse() {
            *vA = (e00) ? e00->prev()->v : NULL,
            *vB = (e10) ? e10->prev()->v : NULL;
 
-    midpoint->val = vec3(0.5) * (e0->v->val + e0->oppv()->val);
-
-
     set<Hedge*> mNeighbors = midpoint->Hedges(),
         oNeighbors = oldpoint->Hedges();
 
@@ -379,8 +376,12 @@ Object::Collapse() {
          delete_va = false,
          delete_vb = false;
 
+    VertexSplit state(midpoint, oldpoint, vA, vB, e00, e01, e02, e10, e11, e12, f0, f1, e0->v->val);
+
     // -------------------------------------------------------
     // make updates
+
+    midpoint->val = vec3(0.5) * (e0->v->val + e0->oppv()->val);
 
     // update vertex points from edges pointing to old vertex
     foreach(Hedge* hedge, oNeighbors) {
@@ -449,6 +450,8 @@ Object::Collapse() {
     if (delete_vb) vertices.erase(vB);
 
     DEBUG_ASSERT( this->check() );
+
+    return state;
 }
 
 set<Hedge*>
@@ -476,4 +479,8 @@ Vertex::Hedges() {
 
     //printf("\n");
     return hedges;
+}
+
+void
+Object::Split(VertexSplit& state) {
 }

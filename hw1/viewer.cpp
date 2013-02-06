@@ -38,9 +38,7 @@ int   g_width = 1024,
 GLhud g_hud;
 
 // geometry
-std::vector<float> g_orgPositions,
-                   g_positions,
-                   g_normals;
+std::vector<VertexSplit> vsplits;
 
 #if 0
 GLuint g_transformUB = 0,
@@ -264,12 +262,31 @@ keyboard(unsigned char key, int x, int y) {
         case 'q': quit();
         case 'f': fitFrame(); break;
         case '\t': toggleFullScreen(); break;
-        case '-': g_model->Collapse(); break;
-        case '_':
-             for(int i = 0; i < (int) (0.1f * (float) g_model->vertices.size()); i++)
-                 g_model->Collapse();
-             break;
         case 0x1b: g_hud.SetVisible(!g_hud.IsVisible()); break;
+
+        /* edge pops */
+        case '-': vsplits.push_back(g_model->Collapse()); break;
+        case '_': {
+                      for(int i = 0; i < (int) (0.1f * (float) g_model->vertices.size()); i++)
+                          vsplits.push_back(g_model->Collapse());
+                      break;
+                  }
+
+        /* vertex splits */
+        case '=': {
+                      VertexSplit& vsplit = vsplits.back();
+                      g_model->Split(vsplit);
+                      vsplits.pop_back();
+                      break;
+                  }
+        case '+': {
+                      for(int i = 0; i < (int) (0.2f * (float) vsplits.size()); i++) {
+                          VertexSplit& vsplit = vsplits.back();
+                          g_model->Split(vsplit);
+                          vsplits.pop_back();
+                      }
+                      break;
+                  }
     }
 }
 
