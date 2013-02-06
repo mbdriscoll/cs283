@@ -445,22 +445,32 @@ Object::Collapse(int nedges) {
 #endif
 
         if (vA && vA->edge == e01) {
+            if      (e02 && e02->pair) vA->edge = e02->pair;
+            else if (e01 && e01->pair) vA->edge = e01->pair->prev();
+            else    delete_va = true;
+        }
+#if 0
             va_candidates.erase(e02);
             if (va_candidates.size() > 0) {
                 Hedge *newe = *(va_candidates.begin());
                 vA->edge = newe->prev();
+                printf("foo1\n");
             } else {
+                printf("foo2\n");
                 delete_va = true;
             }
         }
+#endif
 
         if (vB && vB->edge == e11) {
             vb_candidates.erase(e12);
             if (vb_candidates.size() > 0) {
                 Hedge *newe = *(vb_candidates.begin());
                 vB->edge = newe->prev();
+                printf("foo3\n");
             } else {
                 delete_vb = true;
+                printf("foo4\n");
             }
         }
 
