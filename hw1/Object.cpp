@@ -88,6 +88,14 @@ Object::Object(FILE* input) {
     foreach (Hedge* h, this->hedges)
         h->pair = vtoe[VVpair(h->oppv(),h->v)];
 
+    // Compute Q values
+    foreach(Vertex* v, vertices)
+        v->UpdateQ();
+
+    // Put edges in priority queue
+    foreach(Hedge* e, hedges)
+        e->handle = queue.push(e);
+
     this->check();
 }
 
@@ -637,4 +645,8 @@ void
 Vertex::MoveFrom(vec3 sval) {
     srcval = sval;
     framesleft = N_FRAMES_PER_SPLIT;
+}
+
+void
+Vertex::UpdateQ() {
 }

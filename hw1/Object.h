@@ -1,10 +1,23 @@
 #include "viewer.h"
 
 #include <set>
+#include <boost/heap/fibonacci_heap.hpp>
+
 
 class Hedge;
 class Object;
 class VertexSplit;
+
+struct QEMCompare : std::binary_function <Hedge*,Hedge*,bool> {
+    bool operator() (Hedge *x, Hedge* y) const {
+        return true;
+    }
+};
+
+typedef boost::heap::fibonacci_heap<
+        Hedge*,
+        boost::heap::compare< QEMCompare >
+    > Heap;
 
 class Vertex {
 public:
@@ -24,6 +37,9 @@ public:
     void MoveTo(glm::vec3 dstval);
     void MoveFrom(glm::vec3 dstval);
     std::set<Hedge*> Hedges();
+
+    glm::mat4 Q;
+    void UpdateQ();
 };
 
 class Face {
@@ -42,6 +58,7 @@ public:
     Hedge* next;
     Hedge* pair;
     Vertex* v;
+    Heap::handle_type handle;
 
     Hedge(Vertex *v, Hedge *next, Face *f);
     Hedge* prev();
@@ -51,7 +68,6 @@ public:
     bool Render();
     bool IsDegenerate();
 };
-
 
 class Object {
 public:
@@ -73,6 +89,8 @@ public:
 
     int check();
     void match_pairs();
+
+    Heap queue;
 };
 
 class VertexSplit {
