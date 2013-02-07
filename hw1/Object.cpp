@@ -649,6 +649,14 @@ Vertex::MoveFrom(vec3 sval) {
 
 void
 Vertex::UpdateQ() {
+    Q = mat4(0.0f);
+    foreach(Hedge* h, Hedges()) {
+        // lol: http://answers.yahoo.com/question/index?qid=20110121141727AAncAu4
+        vec3 norm = h->f->Normal();
+        vec3 dv = dstval * norm; // element-wise
+        vec4 p(norm, -1.0f * (dv.x + dv.y + dv.z)); /* = [a b c d] */
+        Q += outerProduct(p, p);
+    }
 }
 
 bool
