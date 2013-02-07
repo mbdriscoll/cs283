@@ -361,28 +361,16 @@ Vertex::Normal() {
     return normalize( normal );
 }
 
-#define QEM 0
-
 Hedge*
 Object::PopNext() {
-#if QEM
     Hedge *next = queue.top();
-    queue.pop();
+    //queue.pop(); //remove is handled by ::erase inside Collapse()
     return next;
-#else
-    return *(hedges.begin());
-#endif
 }
 
 Hedge*
 Object::PeekNext() {
-#if QEM
-    Hedge *next = queue.top();
-    queue.pop();
-    return next;
-#else
-    return *(hedges.begin());
-#endif
+    return queue.top();
 }
 
 VertexSplit*
@@ -430,7 +418,7 @@ Object::Collapse(Hedge *e0) {
     // -------------------------------------------------------
     // make updates
 
-    midpoint->MoveTo( vec3(0.5) * (e0->v->dstval + e0->oppv()->dstval) );
+    midpoint->MoveTo( vec3(e00->GetVBar()) );
 
     // update vertex points from edges pointing to old vertex
     foreach(Hedge* hedge, oNeighbors) {
@@ -446,9 +434,9 @@ Object::Collapse(Hedge *e0) {
 
 
 #if DEBUG
-    assert(mNeighbors.find(e11) != mNeighbors.end());
-    assert(mNeighbors.find(e10) == mNeighbors.end());
-    assert(mNeighbors.find(e12) == mNeighbors.end());
+    if (e11) assert(mNeighbors.find(e11) != mNeighbors.end());
+    if (e10) assert(mNeighbors.find(e10) == mNeighbors.end());
+    if (e12) assert(mNeighbors.find(e12) == mNeighbors.end());
     assert(mNeighbors.find(e01) == mNeighbors.end());
     assert(mNeighbors.find(e00) != mNeighbors.end());
     assert(mNeighbors.find(e02) == mNeighbors.end());
@@ -456,9 +444,9 @@ Object::Collapse(Hedge *e0) {
     assert(oNeighbors.find(e01) != oNeighbors.end());
     assert(oNeighbors.find(e00) == oNeighbors.end());
     assert(oNeighbors.find(e02) == oNeighbors.end());
-    assert(oNeighbors.find(e11) == oNeighbors.end());
-    assert(oNeighbors.find(e10) != oNeighbors.end());
-    assert(oNeighbors.find(e12) == oNeighbors.end());
+    if (e11) assert(oNeighbors.find(e11) == oNeighbors.end());
+    if (e10) assert(oNeighbors.find(e10) != oNeighbors.end());
+    if (e12) assert(oNeighbors.find(e12) == oNeighbors.end());
 #endif
 
     // make sure midpoint.edge is still accurate
@@ -486,12 +474,12 @@ Object::Collapse(Hedge *e0) {
     if (f0) faces.erase(f0);
     if (f1) faces.erase(f1);
 
-    if (e00) hedges.erase(e00);
-    if (e01) hedges.erase(e01);
-    if (e02) hedges.erase(e02);
-    if (e10) hedges.erase(e10);
-    if (e11) hedges.erase(e11);
-    if (e12) hedges.erase(e12);
+    if (e00) { hedges.erase(e00); queue.erase(e00->handle); }
+    if (e01) { hedges.erase(e01); queue.erase(e01->handle); }
+    if (e02) { hedges.erase(e02); queue.erase(e02->handle); }
+    if (e10) { hedges.erase(e10); queue.erase(e10->handle); }
+    if (e11) { hedges.erase(e11); queue.erase(e11->handle); }
+    if (e12) { hedges.erase(e12); queue.erase(e12->handle); }
 
     vertices.erase(oldpoint);
     if (delete_mp) vertices.erase(midpoint);
@@ -501,8 +489,10 @@ Object::Collapse(Hedge *e0) {
     /* collapse fins */
     if (e01->pair && e01->pair->IsDegenerate())
         state->degenA = this->Collapse(e01->pair);
-    if (e11->pair && e11->pair->IsDegenerate())
+    if (e11 && e11->pair && e11->pair->IsDegenerate())
         state->degenB = this->Collapse(e11->pair);
+
+    /* TODO: update quadrics */
 
     DEBUG_ASSERT( this->check() );
 
@@ -567,12 +557,12 @@ VertexSplit::Apply(Object* o) {
     if (vB) vB->edge = e11;
 
     /* register primitives with Object */
-    o->hedges.insert(e00);
-    o->hedges.insert(e01);
-    o->hedges.insert(e02);
-    if (e10) o->hedges.insert(e10);
-    if (e11) o->hedges.insert(e11);
-    if (e12) o->hedges.insert(e12);
+    o->hedges.insert(e00); e00->handle = o->queue.push(e00);
+    o->hedges.insert(e01); e01->handle = o->queue.push(e01);
+    o->hedges.insert(e02); e02->handle = o->queue.push(e02);
+    if (e10) { o->hedges.insert(e10); o->queue.push(e10); }
+    if (e11) { o->hedges.insert(e11); o->queue.push(e11); }
+    if (e12) { o->hedges.insert(e12); o->queue.push(e12); }
 
     o->faces.insert(f0);
     if (f1) o->faces.insert(f1);
@@ -670,7 +660,8 @@ void
 Vertex::UpdateQ() {
     Q = mat4(0.0f);
     foreach(Hedge* h, Hedges()) {
-        // lol: http://answers.yahoo.com/question/index?qid=20110121141727AAncAu4
+        // from: http://answers.yahoo.com/question/index?qid=20110121141727AAncAu4
+        // yes, i know, its from yahoo answers. lol
         vec3 norm = h->f->Normal();
         vec3 dv = dstval * norm; // element-wise
         vec4 p(norm, -1.0f * (dv.x + dv.y + dv.z)); /* = [a b c d] */
@@ -687,7 +678,19 @@ QEMCompare::operator() (Hedge *x, Hedge* y) const {
 
 float
 Hedge::GetError() {
-    mat4 Q = v->Q + oppv()->Q;
-    vec4 v_bar = inverse(Q) * vec4(0.f, 0.f, 0.f, 1.f);
-    return dot(v_bar, Q * v_bar);
+    mat4 Q = GetQ();
+    vec4 v_bar = GetVBar();
+    return dot(v_bar, Q * v_bar); // XXX correct multiplication ?
+}
+
+mat4
+Hedge::GetQ() {
+    return v->Q + oppv()->Q;
+}
+
+vec4
+Hedge::GetVBar() {
+    mat4 Q = GetQ();
+    // TODO make sure Q is invertible. GLM behavior is undefined otherwise.
+    return inverse(Q) * vec4(0.f, 0.f, 0.f, 1.f); // XXX perhaps dot(), not '*' ?
 }

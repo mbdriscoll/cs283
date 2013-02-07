@@ -66,6 +66,8 @@ public:
     bool Render();
     bool IsDegenerate();
     float GetError();
+    glm::vec4 GetVBar();
+    glm::mat4 GetQ();
 };
 
 class Object {
