@@ -61,6 +61,7 @@
     #include <GLUT/glut.h>
 #else
     #include <GL/gl.h>
+    #include <GL/glu.h>
 #endif
 #include "hud.h"
 
