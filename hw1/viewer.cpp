@@ -12,7 +12,8 @@
 Object *g_model = NULL;
 
 int   g_frame = 0,
-      g_animate = 0, /* 0: do nothing.   1: do splits   -1: do pops  */
+      g_animate = 0,
+      g_animateDirection = 0, /* 1: do splits   0: do pops  */
       g_repeatCount = 0;
 
 // GUI variables
@@ -315,7 +316,7 @@ initHUD()
     g_hud.AddRadioButton(1, "Shaded",      g_wire == 1, 10, 80, callbackWireframe, 1, 'w');
 
     g_hud.AddCheckBox("Quadrics (m)", false, 10, 110, callbackQEM, 0, 'm');
-    g_hud.AddCheckBox("Animate", false, 10, 130, callbackAnimate, 0, 'a');
+    g_hud.AddCheckBox("Animate (a)", 0, 10, 130, callbackAnimate, 0, 'a');
 }
 
 //------------------------------------------------------------------------------
@@ -353,11 +354,13 @@ idle() {
     bool doneAnimating = g_model->Render();
 
     /* 0: do nothing.   1: do splits   -1: do pops  */
-    if (doneAnimating && g_animate != 0) {
-        if (g_model->vsplits.size() == 0) g_animate = -1;
-        if (g_model->faces.size() <= 2)   g_animate =  1;
+    if (doneAnimating && g_animate) {
+        if (g_model->vsplits.size() == 0)
+            g_animateDirection = 0;
+        else if (g_model->faces.size() <= 2)
+            g_animateDirection = 1;
 
-        if (g_animate == 1)
+        if (g_animateDirection)
             g_model->Split();
         else
             g_model->Pop();

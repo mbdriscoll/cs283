@@ -84,7 +84,6 @@ public:
     VertexSplit* CollapseNext();
     VertexSplit* Collapse(Hedge* e);
     Hedge* PeekNext();
-    Hedge* PopNext();
 
     void Pop(bool many = false);
     void Split(bool many = false);

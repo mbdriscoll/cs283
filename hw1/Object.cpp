@@ -17,6 +17,8 @@
 using namespace glm;
 using namespace std;
 
+extern int g_qem;
+
 typedef std::pair<Vertex*,Vertex*> VVpair;
 
 Object::Object(FILE* input) {
@@ -362,20 +364,16 @@ Vertex::Normal() {
 }
 
 Hedge*
-Object::PopNext() {
-    Hedge *next = queue.top();
-    //queue.pop(); //remove is handled by ::erase inside Collapse()
-    return next;
-}
-
-Hedge*
 Object::PeekNext() {
-    return queue.top();
+    if (g_qem)
+        return queue.top();
+    else
+        return *(hedges.begin());
 }
 
 VertexSplit*
 Object::CollapseNext() {
-    Hedge *e0 = PopNext();
+    Hedge *e0 = PeekNext();
     return this->Collapse(e0);
 }
 
@@ -418,7 +416,10 @@ Object::Collapse(Hedge *e0) {
     // -------------------------------------------------------
     // make updates
 
-    midpoint->MoveTo( vec3(e00->GetVBar()) );
+    if (g_qem)
+        midpoint->MoveTo( vec3(e00->GetVBar()) );
+    else
+        midpoint->MoveTo( vec3(0.5f) * (midpoint->dstval + oldpoint->dstval) );
 
     // update vertex points from edges pointing to old vertex
     foreach(Hedge* hedge, oNeighbors) {
@@ -474,12 +475,12 @@ Object::Collapse(Hedge *e0) {
     if (f0) faces.erase(f0);
     if (f1) faces.erase(f1);
 
-    if (e00) { hedges.erase(e00); queue.erase(e00->handle); }
-    if (e01) { hedges.erase(e01); queue.erase(e01->handle); }
-    if (e02) { hedges.erase(e02); queue.erase(e02->handle); }
-    if (e10) { hedges.erase(e10); queue.erase(e10->handle); }
-    if (e11) { hedges.erase(e11); queue.erase(e11->handle); }
-    if (e12) { hedges.erase(e12); queue.erase(e12->handle); }
+    if (e00) { hedges.erase(e00); if (g_qem) queue.erase(e00->handle); }
+    if (e01) { hedges.erase(e01); if (g_qem) queue.erase(e01->handle); }
+    if (e02) { hedges.erase(e02); if (g_qem) queue.erase(e02->handle); }
+    if (e10) { hedges.erase(e10); if (g_qem) queue.erase(e10->handle); }
+    if (e11) { hedges.erase(e11); if (g_qem) queue.erase(e11->handle); }
+    if (e12) { hedges.erase(e12); if (g_qem) queue.erase(e12->handle); }
 
     vertices.erase(oldpoint);
     if (delete_mp) vertices.erase(midpoint);
@@ -557,12 +558,12 @@ VertexSplit::Apply(Object* o) {
     if (vB) vB->edge = e11;
 
     /* register primitives with Object */
-    o->hedges.insert(e00); e00->handle = o->queue.push(e00);
-    o->hedges.insert(e01); e01->handle = o->queue.push(e01);
-    o->hedges.insert(e02); e02->handle = o->queue.push(e02);
-    if (e10) { o->hedges.insert(e10); o->queue.push(e10); }
-    if (e11) { o->hedges.insert(e11); o->queue.push(e11); }
-    if (e12) { o->hedges.insert(e12); o->queue.push(e12); }
+    o->hedges.insert(e00); if (g_qem) e00->handle = o->queue.push(e00);
+    o->hedges.insert(e01); if (g_qem) e01->handle = o->queue.push(e01);
+    o->hedges.insert(e02); if (g_qem) e02->handle = o->queue.push(e02);
+    if (e10) { o->hedges.insert(e10); if (g_qem) e00->handle = o->queue.push(e10); }
+    if (e11) { o->hedges.insert(e11); if (g_qem) e11->handle = o->queue.push(e11); }
+    if (e12) { o->hedges.insert(e12); if (g_qem) e12->handle = o->queue.push(e12); }
 
     o->faces.insert(f0);
     if (f1) o->faces.insert(f1);
