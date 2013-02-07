@@ -361,28 +361,16 @@ Vertex::Normal() {
     return normalize( normal );
 }
 
-#define QEM 1
-
 Hedge*
 Object::PopNext() {
-#if QEM
     Hedge *next = queue.top();
-    if (next->pair)
-        queue.erase(next->pair->handle);
-    queue.pop();
+    //queue.pop(); //remove is handled by ::erase inside Collapse()
     return next;
-#else
-    return *(hedges.begin());
-#endif
 }
 
 Hedge*
 Object::PeekNext() {
-#if QEM
     return queue.top();
-#else
-    return *(hedges.begin());
-#endif
 }
 
 VertexSplit*
@@ -446,9 +434,9 @@ Object::Collapse(Hedge *e0) {
 
 
 #if DEBUG
-    assert(mNeighbors.find(e11) != mNeighbors.end());
-    assert(mNeighbors.find(e10) == mNeighbors.end());
-    assert(mNeighbors.find(e12) == mNeighbors.end());
+    if (e11) assert(mNeighbors.find(e11) != mNeighbors.end());
+    if (e10) assert(mNeighbors.find(e10) == mNeighbors.end());
+    if (e12) assert(mNeighbors.find(e12) == mNeighbors.end());
     assert(mNeighbors.find(e01) == mNeighbors.end());
     assert(mNeighbors.find(e00) != mNeighbors.end());
     assert(mNeighbors.find(e02) == mNeighbors.end());
@@ -456,9 +444,9 @@ Object::Collapse(Hedge *e0) {
     assert(oNeighbors.find(e01) != oNeighbors.end());
     assert(oNeighbors.find(e00) == oNeighbors.end());
     assert(oNeighbors.find(e02) == oNeighbors.end());
-    assert(oNeighbors.find(e11) == oNeighbors.end());
-    assert(oNeighbors.find(e10) != oNeighbors.end());
-    assert(oNeighbors.find(e12) == oNeighbors.end());
+    if (e11) assert(oNeighbors.find(e11) == oNeighbors.end());
+    if (e10) assert(oNeighbors.find(e10) != oNeighbors.end());
+    if (e12) assert(oNeighbors.find(e12) == oNeighbors.end());
 #endif
 
     // make sure midpoint.edge is still accurate
@@ -486,12 +474,12 @@ Object::Collapse(Hedge *e0) {
     if (f0) faces.erase(f0);
     if (f1) faces.erase(f1);
 
-    if (e00) hedges.erase(e00);
-    if (e01) hedges.erase(e01);
-    if (e02) hedges.erase(e02);
-    if (e10) hedges.erase(e10);
-    if (e11) hedges.erase(e11);
-    if (e12) hedges.erase(e12);
+    if (e00) { hedges.erase(e00); queue.erase(e00->handle); }
+    if (e01) { hedges.erase(e01); queue.erase(e01->handle); }
+    if (e02) { hedges.erase(e02); queue.erase(e02->handle); }
+    if (e10) { hedges.erase(e10); queue.erase(e10->handle); }
+    if (e11) { hedges.erase(e11); queue.erase(e11->handle); }
+    if (e12) { hedges.erase(e12); queue.erase(e12->handle); }
 
     vertices.erase(oldpoint);
     if (delete_mp) vertices.erase(midpoint);
@@ -501,7 +489,7 @@ Object::Collapse(Hedge *e0) {
     /* collapse fins */
     if (e01->pair && e01->pair->IsDegenerate())
         state->degenA = this->Collapse(e01->pair);
-    if (e11->pair && e11->pair->IsDegenerate())
+    if (e11 && e11->pair && e11->pair->IsDegenerate())
         state->degenB = this->Collapse(e11->pair);
 
     DEBUG_ASSERT( this->check() );
