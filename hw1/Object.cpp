@@ -582,8 +582,8 @@ VertexSplit::Apply(Object* o) {
     if (vB) o->vertices.insert(vB);
 
     /* make new vertices enter smoothly */
-    newpoint->MoveFrom(target->dstval);
-    if (vA) vA->MoveFrom(newpoint->Position());
+    newpoint->MoveFrom(target->Position());
+    if (vA) vA->MoveFrom(target->Position());
     if (vB) vB->MoveFrom(target->Position());
 }
 
