@@ -56,6 +56,7 @@
 //
 #include <string>
 #include <stdio.h>
+#include <GL/glu.h>
 #include "gl_hud.h"
 #include "font_image.h"
 
