@@ -418,7 +418,7 @@ Object::Collapse(Hedge *e0) {
     // -------------------------------------------------------
     // make updates
 
-    midpoint->MoveTo( vec3(0.5) * (e0->v->dstval + e0->oppv()->dstval) );
+    midpoint->MoveTo( vec3(e00->GetVBar()) );
 
     // update vertex points from edges pointing to old vertex
     foreach(Hedge* hedge, oNeighbors) {
@@ -492,6 +492,8 @@ Object::Collapse(Hedge *e0) {
     if (e11 && e11->pair && e11->pair->IsDegenerate())
         state->degenB = this->Collapse(e11->pair);
 
+    /* TODO: update quadrics */
+
     DEBUG_ASSERT( this->check() );
 
     return state;
@@ -555,12 +557,12 @@ VertexSplit::Apply(Object* o) {
     if (vB) vB->edge = e11;
 
     /* register primitives with Object */
-    o->hedges.insert(e00);
-    o->hedges.insert(e01);
-    o->hedges.insert(e02);
-    if (e10) o->hedges.insert(e10);
-    if (e11) o->hedges.insert(e11);
-    if (e12) o->hedges.insert(e12);
+    o->hedges.insert(e00); e00->handle = o->queue.push(e00);
+    o->hedges.insert(e01); e01->handle = o->queue.push(e01);
+    o->hedges.insert(e02); e02->handle = o->queue.push(e02);
+    if (e10) { o->hedges.insert(e10); o->queue.push(e10); }
+    if (e11) { o->hedges.insert(e11); o->queue.push(e11); }
+    if (e12) { o->hedges.insert(e12); o->queue.push(e12); }
 
     o->faces.insert(f0);
     if (f1) o->faces.insert(f1);
@@ -658,7 +660,8 @@ void
 Vertex::UpdateQ() {
     Q = mat4(0.0f);
     foreach(Hedge* h, Hedges()) {
-        // lol: http://answers.yahoo.com/question/index?qid=20110121141727AAncAu4
+        // from: http://answers.yahoo.com/question/index?qid=20110121141727AAncAu4
+        // yes, i know, its from yahoo answers. lol
         vec3 norm = h->f->Normal();
         vec3 dv = dstval * norm; // element-wise
         vec4 p(norm, -1.0f * (dv.x + dv.y + dv.z)); /* = [a b c d] */
@@ -675,7 +678,19 @@ QEMCompare::operator() (Hedge *x, Hedge* y) const {
 
 float
 Hedge::GetError() {
-    mat4 Q = v->Q + oppv()->Q;
-    vec4 v_bar = inverse(Q) * vec4(0.f, 0.f, 0.f, 1.f);
-    return dot(v_bar, Q * v_bar);
+    mat4 Q = GetQ();
+    vec4 v_bar = GetVBar();
+    return dot(v_bar, Q * v_bar); // XXX correct multiplication ?
+}
+
+mat4
+Hedge::GetQ() {
+    return v->Q + oppv()->Q;
+}
+
+vec4
+Hedge::GetVBar() {
+    mat4 Q = GetQ();
+    // TODO make sure Q is invertible. GLM behavior is undefined otherwise.
+    return inverse(Q) * vec4(0.f, 0.f, 0.f, 1.f); // XXX perhaps dot(), not '*' ?
 }
