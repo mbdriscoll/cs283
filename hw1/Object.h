@@ -9,9 +9,7 @@ class Object;
 class VertexSplit;
 
 struct QEMCompare : std::binary_function <Hedge*,Hedge*,bool> {
-    bool operator() (Hedge *x, Hedge* y) const {
-        return true;
-    }
+    bool operator() (Hedge *x, Hedge* y) const;
 };
 
 typedef boost::heap::fibonacci_heap<
@@ -67,6 +65,7 @@ public:
     void set_pair(Hedge* o);
     bool Render();
     bool IsDegenerate();
+    float GetError();
 };
 
 class Object {

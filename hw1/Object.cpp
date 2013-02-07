@@ -650,3 +650,17 @@ Vertex::MoveFrom(vec3 sval) {
 void
 Vertex::UpdateQ() {
 }
+
+bool
+QEMCompare::operator() (Hedge *x, Hedge* y) const {
+    /* min-cost hedge should be on top, but heap is a max heap so this is
+     * the opposite of what you'd expect */
+    return x->GetError() > y->GetError();
+}
+
+float
+Hedge::GetError() {
+    mat4 Q = v->Q + oppv()->Q;
+    vec4 v_bar = inverse(Q) * vec4(0.f, 0.f, 0.f, 1.f);
+    return dot(v_bar, Q * v_bar);
+}
