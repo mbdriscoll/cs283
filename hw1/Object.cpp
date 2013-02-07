@@ -361,12 +361,14 @@ Vertex::Normal() {
     return normalize( normal );
 }
 
-#define QEM 0
+#define QEM 1
 
 Hedge*
 Object::PopNext() {
 #if QEM
     Hedge *next = queue.top();
+    if (next->pair)
+        queue.erase(next->pair->handle);
     queue.pop();
     return next;
 #else
@@ -377,9 +379,7 @@ Object::PopNext() {
 Hedge*
 Object::PeekNext() {
 #if QEM
-    Hedge *next = queue.top();
-    queue.pop();
-    return next;
+    return queue.top();
 #else
     return *(hedges.begin());
 #endif
