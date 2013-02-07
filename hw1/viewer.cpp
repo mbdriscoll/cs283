@@ -36,6 +36,8 @@ float g_rotate[2] = {0, 0},
 int   g_width = 1024,
       g_height = 1024;
 
+int   g_qem = 0;
+
 GLhud g_hud;
 
 #if 0
@@ -254,7 +256,6 @@ keyboard(unsigned char key, int x, int y) {
         case 'q': quit();
         case 'f': fitFrame(); break;
         case '\t': toggleFullScreen(); break;
-        case 'a': g_animate = g_animate + 1 % 2; break;
         case 0x1b: g_hud.SetVisible(!g_hud.IsVisible()); break;
 
         /* edge pops */
@@ -293,6 +294,16 @@ callbackFreeze(bool checked, int f)
 }
 
 static void
+callbackQEM(bool checked, int n) {
+    g_qem = checked;
+}
+
+static void
+callbackAnimate(bool checked, int n) {
+    g_animate = checked;
+}
+
+static void
 initHUD()
 {
     g_hud.Init(g_width, g_height);
@@ -302,6 +313,9 @@ initHUD()
 
     g_hud.AddRadioButton(1, "Wire (w)",    g_wire == 0, 10, 60, callbackWireframe, 0, 'w');
     g_hud.AddRadioButton(1, "Shaded",      g_wire == 1, 10, 80, callbackWireframe, 1, 'w');
+
+    g_hud.AddCheckBox("Quadrics (m)", false, 10, 110, callbackQEM, 0, 'm');
+    g_hud.AddCheckBox("Animate", false, 10, 130, callbackAnimate, 0, 'a');
 }
 
 //------------------------------------------------------------------------------
