@@ -311,7 +311,7 @@ Object::DrawNormals(int vNorms, int fNorms) {
     glEnd();
 
     // Draw a quad by the next edge to collapse
-    Hedge* h = GetHedgeToCollapse();
+    Hedge* h = PeekNext();
     Vertex *v0 = h->v,
            *v1 = h->oppv();
     vec3 enorm = vec3(0.01f) * normalize(v0->Normal() + v1->Normal());
@@ -361,14 +361,33 @@ Vertex::Normal() {
     return normalize( normal );
 }
 
+#define QEM 0
+
 Hedge*
-Object::GetHedgeToCollapse() {
+Object::PopNext() {
+#if QEM
+    Hedge *next = queue.top();
+    queue.pop();
+    return next;
+#else
     return *(hedges.begin());
+#endif
+}
+
+Hedge*
+Object::PeekNext() {
+#if QEM
+    Hedge *next = queue.top();
+    queue.pop();
+    return next;
+#else
+    return *(hedges.begin());
+#endif
 }
 
 VertexSplit*
 Object::CollapseNext() {
-    Hedge *e0 = GetHedgeToCollapse();
+    Hedge *e0 = PopNext();
     return this->Collapse(e0);
 }
 
