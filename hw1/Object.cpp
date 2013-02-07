@@ -95,8 +95,10 @@ Object::Object(FILE* input) {
         v->UpdateQ();
 
     // Put edges in priority queue
-    foreach(Hedge* e, hedges)
-        e->handle = queue.push(e);
+    if (g_qem) {
+        foreach(Hedge* e, hedges)
+            e->handle = queue.push(e);
+    }
 
     this->check();
 }
@@ -374,6 +376,8 @@ Object::PeekNext() {
 VertexSplit*
 Object::CollapseNext() {
     Hedge *e0 = PeekNext();
+    if (g_qem)
+        printf("Collapsing edge with error: %f\n", e0->GetError());
     return this->Collapse(e0);
 }
 
@@ -657,6 +661,22 @@ Vertex::MoveFrom(vec3 sval) {
     framesleft = N_FRAMES_PER_SPLIT;
 }
 
+void glm_print(glm::vec3 v) {
+    printf("[ %f %f %f ]\n", v.x, v.y, v.z);
+}
+
+void glm_print(glm::vec4 v) {
+    printf("[ %f %f %f %f ]\n", v.x, v.y, v.z, v.z);
+}
+void glm_print(glm::mat4 m) {
+    printf("[ %f %f %f %f\n  %f %f %f %f\n  %f %f %f %f\n  %f %f %f %f ]\n",
+            m[0][0], m[0][1], m[0][2], m[0][3],
+            m[1][0], m[1][1], m[1][2], m[1][3],
+            m[2][0], m[2][1], m[2][2], m[2][3],
+            m[3][0], m[3][1], m[3][2], m[3][3]);
+
+}
+
 void
 Vertex::UpdateQ() {
     Q = mat4(0.0f);
@@ -665,8 +685,15 @@ Vertex::UpdateQ() {
         // yes, i know, its from yahoo answers. lol
         vec3 norm = h->f->Normal();
         vec3 dv = dstval * norm; // element-wise
-        vec4 p(norm, -1.0f * (dv.x + dv.y + dv.z)); /* = [a b c d] */
+        vec4 p(norm.x, norm.y, norm.z, dv.x + dv.y + dv.z); /* = [a b c d] */
+        mat4 op = outerProduct(p,p);
         Q += outerProduct(p, p);
+
+        //printf("norm is:\n");    glm_print(norm);
+        //printf("dv is:\n");      glm_print(dv);
+        //printf("p is:\n");       glm_print(p);
+        //printf("op(p,p) is:\n"); glm_print(op);
+        //printf("Q is:\n");       glm_print(Q);
     }
 }
 
@@ -681,6 +708,7 @@ float
 Hedge::GetError() {
     mat4 Q = GetQ();
     vec4 v_bar = GetVBar();
+    //printf("v bar is "); print(v_bar);
     return dot(v_bar, Q * v_bar); // XXX correct multiplication ?
 }
 
@@ -692,6 +720,10 @@ Hedge::GetQ() {
 vec4
 Hedge::GetVBar() {
     mat4 Q = GetQ();
+    Q[3][0] = Q[3][1] = Q[3][2] = 0.0f;
+    Q[3][3] = 1.0f;
     // TODO make sure Q is invertible. GLM behavior is undefined otherwise.
-    return inverse(Q) * vec4(0.f, 0.f, 0.f, 1.f); // XXX perhaps dot(), not '*' ?
+    vec4 vbar = inverse(Q) * vec4(0.f, 0.f, 0.f, 1.f); // XXX perhaps dot(), not '*' ?
+    //printf("Q_inv is:\n");   glm_print(inverse(Q));
+    return vbar;
 }
