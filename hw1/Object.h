@@ -35,7 +35,7 @@ public:
     void MoveTo(glm::vec3 dstval);
     void MoveFrom(glm::vec3 dstval);
     std::set<Hedge*> Hedges();
-
+    std::set<Vertex*> Vertices();
     glm::mat4 Q;
     void UpdateQ();
 };

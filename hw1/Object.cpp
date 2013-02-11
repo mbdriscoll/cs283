@@ -425,11 +425,12 @@ Object::Collapse(Hedge *e0) {
     // -------------------------------------------------------
     // make updates
 
-    if (g_qem)
-        midpoint->MoveTo( vec3(e00->GetVBar()) );
-    else
+    if (g_qem) {
+      vec4 newloc = e00->GetVBar(); 
+      midpoint->MoveTo( vec3(newloc.x,newloc.y,newloc.z) );
+    } else {
         midpoint->MoveTo( vec3(0.5f) * (midpoint->dstval + oldpoint->dstval) );
-
+    }
     // update vertex points from edges pointing to old vertex
     foreach(Hedge* hedge, oNeighbors) {
         DEBUG_ASSERT(hedge->v == oldpoint);
@@ -503,6 +504,8 @@ Object::Collapse(Hedge *e0) {
         state->degenB = this->Collapse(e11->pair);
 
     /* TODO: update quadrics */
+    foreach(Vertex* neighbor, midpoint->Vertices())
+      neighbor->UpdateQ();
 
     DEBUG_ASSERT( this->check() );
 
@@ -531,6 +534,27 @@ Vertex::Hedges() {
         }
 
     return hedges;
+}
+
+set<Vertex*>
+Vertex::Vertices() {
+    Hedge *e;
+    set<Vertex*> neighbors;
+    neighbors.insert(edge->v);
+
+    for(e = edge->next->pair; e != NULL && e != edge; e=e->next->pair) {
+        neighbors.insert(e->v);
+	if (e->next->pair == NULL) neighbors.insert(e->next->next->v);
+    }
+
+    if (e == NULL) {
+      for(e = edge->pair; e != NULL; e=e->prev()->pair) {
+	if (e->prev() == NULL || e->prev() == edge) break;
+	neighbors.insert(e->prev()->v);
+      }
+    }
+
+    return neighbors;
 }
 
 void
@@ -648,24 +672,6 @@ Object::Split(bool many) {
     }
 }
 
-void
-Vertex::MoveTo(vec3 dval) {
-    srcval = Position();
-    dstval = dval;
-    framesleft = N_FRAMES_PER_SPLIT;
-}
-
-glm::vec3
-Vertex::Position() {
-    return dstval + (srcval-dstval) * vec3((float)framesleft/ (float)N_FRAMES_PER_SPLIT);
-}
-
-void
-Vertex::MoveFrom(vec3 sval) {
-    srcval = sval;
-    framesleft = N_FRAMES_PER_SPLIT;
-}
-
 void glm_print(glm::vec3 v) {
     printf("[ %f %f %f ]\n", v.x, v.y, v.z);
 }
@@ -683,6 +689,26 @@ void glm_print(glm::mat4 m) {
 }
 
 void
+Vertex::MoveTo(vec3 dval) {
+  // glm_print(dval);
+    srcval = Position();
+    dstval = dval;
+    framesleft = N_FRAMES_PER_SPLIT;
+}
+
+glm::vec3
+Vertex::Position() {
+    return dstval + (srcval-dstval) * vec3((float)framesleft/ (float)N_FRAMES_PER_SPLIT);
+}
+
+void
+Vertex::MoveFrom(vec3 sval) {
+    srcval = sval;
+    framesleft = N_FRAMES_PER_SPLIT;
+}
+
+
+void
 Vertex::UpdateQ() {
     Q = mat4(0.0f);
     foreach(Hedge* h, Hedges()) {
@@ -690,7 +716,7 @@ Vertex::UpdateQ() {
         // yes, i know, its from yahoo answers. lol
         vec3 norm = h->f->Normal();
         vec3 dv = dstval * norm; // element-wise
-        vec4 p(norm.x, norm.y, norm.z, dv.x + dv.y + dv.z); /* = [a b c d] */
+        vec4 p(norm.x, norm.y, norm.z, -1.0*dv.x - dv.y - dv.z); /* = [a b c d] */
         mat4 op = outerProduct(p,p);
         Q += outerProduct(p, p);
 
@@ -725,10 +751,11 @@ Hedge::GetQ() {
 vec4
 Hedge::GetVBar() {
     mat4 Q = GetQ();
-    Q[3][0] = Q[3][1] = Q[3][2] = 0.0f;
+    // I think this indexing order is needed
+    Q[0][3] = Q[1][3] = Q[2][3] = 0.0f;
     Q[3][3] = 1.0f;
     // TODO make sure Q is invertible. GLM behavior is undefined otherwise.
     vec4 vbar = inverse(Q) * vec4(0.f, 0.f, 0.f, 1.f); // XXX perhaps dot(), not '*' ?
-    //printf("Q_inv is:\n");   glm_print(inverse(Q));
+    // printf("Q_inv is:\n");   glm_print(inverse(Q));
     return vbar;
 }
