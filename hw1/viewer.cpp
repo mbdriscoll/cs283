@@ -297,6 +297,7 @@ callbackFreeze(bool checked, int f)
 static void
 callbackQEM(bool checked, int n) {
     g_qem = checked;
+    if (g_model != NULL && g_qem) g_model->MakeQueue();
 }
 
 static void

@@ -96,11 +96,16 @@ Object::Object(FILE* input) {
 
     // Put edges in priority queue
     if (g_qem) {
-        foreach(Hedge* e, hedges)
-            e->handle = queue.push(e);
+      this->MakeQueue();
     }
 
     this->check();
+}
+
+void
+Object::MakeQueue(void) {
+  foreach(Hedge* e, hedges)
+    e->handle = queue.push(e);
 }
 
 void
