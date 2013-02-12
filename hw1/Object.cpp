@@ -540,18 +540,11 @@ set<Vertex*>
 Vertex::Vertices() {
     Hedge *e;
     set<Vertex*> neighbors;
-    neighbors.insert(edge->v);
 
-    for(e = edge->next->pair; e != NULL && e != edge; e=e->next->pair) {
-        neighbors.insert(e->v);
-	if (e->next->pair == NULL) neighbors.insert(e->next->next->v);
-    }
-
-    if (e == NULL) {
-      for(e = edge->pair; e != NULL; e=e->prev()->pair) {
-	if (e->prev() == NULL || e->prev() == edge) break;
-	neighbors.insert(e->prev()->v);
-      }
+    foreach(Hedge* h, Hedges()) {
+        assert(h->v == this);
+        neighbors.insert(h->oppv());
+        neighbors.insert(h->prev()->v);
     }
 
     return neighbors;
