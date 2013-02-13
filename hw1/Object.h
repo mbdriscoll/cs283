@@ -1,7 +1,7 @@
 #include "viewer.h"
 
 #include <set>
-#include <boost/heap/fibonacci_heap.hpp>
+#include <boost/heap/binomial_heap.hpp>
 
 
 class Hedge;
@@ -12,7 +12,7 @@ struct QEMCompare : std::binary_function <Hedge*,Hedge*,bool> {
     bool operator() (Hedge *x, Hedge* y) const;
 };
 
-typedef boost::heap::fibonacci_heap<
+typedef boost::heap::binomial_heap<
         Hedge*,
         boost::heap::compare< QEMCompare >
     > Heap;
