@@ -503,9 +503,16 @@ Object::Collapse(Hedge *e0) {
     if (e11 && e11->pair && e11->pair->IsDegenerate())
         state->degenB = this->Collapse(e11->pair);
 
-    /* TODO: update quadrics */
+    /* update quadrics */
     foreach(Vertex* neighbor, midpoint->Vertices())
       neighbor->UpdateQ();
+
+    /* rebalance heap */
+    foreach(Hedge* h, midpoint->Hedges()) {
+        queue.update(h->handle, h);
+        queue.update(h->next->handle, h->next);
+        queue.update(h->next->next->handle, h->next->next);
+    }
 
     DEBUG_ASSERT( this->check() );
 
