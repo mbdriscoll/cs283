@@ -95,18 +95,12 @@ Object::Object(FILE* input) {
         v->UpdateQ();
 
     // Put edges in priority queue
-    if (g_qem) {
-      this->MakeQueue();
-    }
+    foreach(Hedge* e, hedges)
+        e->handle = queue.push(e);
 
     this->check();
 }
 
-void
-Object::MakeQueue(void) {
-  foreach(Hedge* e, hedges)
-    e->handle = queue.push(e);
-}
 
 void
 Object::SetCenterSize(float *center, float *size) {
@@ -691,6 +685,7 @@ void glm_print(glm::mat4 m) {
 void
 Vertex::MoveTo(vec3 dval) {
   // glm_print(dval);
+    printf("moving vertex to %f %f %f\n", dval.x, dval.y, dval.z);
     srcval = Position();
     dstval = dval;
     framesleft = N_FRAMES_PER_SPLIT;

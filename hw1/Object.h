@@ -78,7 +78,6 @@ public:
     std::vector<VertexSplit*> vsplits;
 
     Object(FILE* inputfile);
-    void MakeQueue();
     bool Render();
     void DrawNormals(int vNorms, int fNorms);
     void SetCenterSize(float *center, float *size);
