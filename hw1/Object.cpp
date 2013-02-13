@@ -21,6 +21,22 @@ extern int g_qem;
 
 typedef std::pair<Vertex*,Vertex*> VVpair;
 
+void glm_print(glm::vec3 v) {
+    printf("[ %f %f %f ]\n", v.x, v.y, v.z);
+}
+
+void glm_print(glm::vec4 v) {
+    printf("[ %f %f %f %f ]\n", v.x, v.y, v.z, v.z);
+}
+void glm_print(glm::mat4 m) {
+    printf("[ %f %f %f %f\n  %f %f %f %f\n  %f %f %f %f\n  %f %f %f %f ]\n",
+            m[0][0], m[1][0], m[2][0], m[3][0],
+            m[0][1], m[1][1], m[2][1], m[3][1],
+            m[0][2], m[1][2], m[2][2], m[3][2],
+            m[0][3], m[1][3], m[2][3], m[3][3]);
+
+}
+
 Object::Object(FILE* input) {
     int scanned;
 
@@ -414,17 +430,15 @@ Object::Collapse(Hedge *e0) {
          delete_va = false,
          delete_vb = false;
 
+    vec4 newloc = e00->GetVBar();
+
     VertexSplit *state = new VertexSplit(e00);
 
     // -------------------------------------------------------
     // make updates
 
-    if (g_qem) {
-      vec4 newloc = e00->GetVBar();
-      midpoint->MoveTo( vec3(newloc.x,newloc.y,newloc.z) );
-    } else {
-        midpoint->MoveTo( vec3(0.5f) * (midpoint->dstval + oldpoint->dstval) );
-    }
+    midpoint->MoveTo( newloc );
+
     // update vertex points from edges pointing to old vertex
     foreach(Hedge* hedge, oNeighbors) {
         DEBUG_ASSERT(hedge->v == oldpoint);
@@ -666,26 +680,13 @@ Object::Split(bool many) {
     }
 }
 
-void glm_print(glm::vec3 v) {
-    printf("[ %f %f %f ]\n", v.x, v.y, v.z);
-}
-
-void glm_print(glm::vec4 v) {
-    printf("[ %f %f %f %f ]\n", v.x, v.y, v.z, v.z);
-}
-void glm_print(glm::mat4 m) {
-    printf("[ %f %f %f %f\n  %f %f %f %f\n  %f %f %f %f\n  %f %f %f %f ]\n",
-            m[0][0], m[0][1], m[0][2], m[0][3],
-            m[1][0], m[1][1], m[1][2], m[1][3],
-            m[2][0], m[2][1], m[2][2], m[2][3],
-            m[3][0], m[3][1], m[3][2], m[3][3]);
-
+void
+Vertex::MoveTo(vec4 p) {
+    MoveTo( vec3(p.x, p.y, p.z) );
 }
 
 void
 Vertex::MoveTo(vec3 dval) {
-  // glm_print(dval);
-    printf("moving vertex to %f %f %f\n", dval.x, dval.y, dval.z);
     srcval = Position();
     dstval = dval;
     framesleft = N_FRAMES_PER_SPLIT;
@@ -711,15 +712,17 @@ Vertex::UpdateQ() {
         // yes, i know, its from yahoo answers. lol
         vec3 norm = h->f->Normal();
         vec3 dv = dstval * norm; // element-wise
-        vec4 p(norm.x, norm.y, norm.z, -1.0*dv.x - dv.y - dv.z); /* = [a b c d] */
+        vec4 p(norm.x, norm.y, norm.z, -1.f*dv.x - dv.y - dv.z); /* = [a b c d] */
         mat4 op = outerProduct(p,p);
         Q += outerProduct(p, p);
 
-        //printf("norm is:\n");    glm_print(norm);
-        //printf("dv is:\n");      glm_print(dv);
-        //printf("p is:\n");       glm_print(p);
-        //printf("op(p,p) is:\n"); glm_print(op);
-        //printf("Q is:\n");       glm_print(Q);
+#if 0
+        printf("norm is:\n");    glm_print(norm);
+        printf("dv is:\n");      glm_print(dv);
+        printf("p is:\n");       glm_print(p);
+        printf("op(p,p) is:\n"); glm_print(op);
+        printf("Q is:\n");       glm_print(Q);
+#endif
     }
 }
 
@@ -727,30 +730,40 @@ bool
 QEMCompare::operator() (Hedge *x, Hedge* y) const {
     /* min-cost hedge should be on top, but heap is a max heap so this is
      * the opposite of what you'd expect */
-    return x->GetError() > y->GetError();
+    float x_error = x->GetError(),
+          y_error = y->GetError();
+
+    /* reject nans */
+    assert(x_error == x_error);
+    assert(y_error == y_error);
+
+    return x_error > y_error;
 }
 
 float
 Hedge::GetError() {
     mat4 Q = GetQ();
     vec4 v_bar = GetVBar();
-    //printf("v bar is "); print(v_bar);
-    return dot(v_bar, Q * v_bar); // XXX correct multiplication ?
+    return dot(v_bar, Q * v_bar);
 }
 
 mat4
 Hedge::GetQ() {
-    return v->Q + oppv()->Q;
+    mat4 Q = v->Q + oppv()->Q;
+    Q[0][3] = Q[1][3] = Q[2][3] = 0.0f; Q[3][3] = 1.0f;
+    return Q;
 }
 
 vec4
 Hedge::GetVBar() {
     mat4 Q = GetQ();
-    // I think this indexing order is needed
-    Q[0][3] = Q[1][3] = Q[2][3] = 0.0f;
-    Q[3][3] = 1.0f;
-    // TODO make sure Q is invertible. GLM behavior is undefined otherwise.
-    vec4 vbar = inverse(Q) * vec4(0.f, 0.f, 0.f, 1.f); // XXX perhaps dot(), not '*' ?
-    // printf("Q_inv is:\n");   glm_print(inverse(Q));
+    vec4 vbar = inverse(Q) * vec4(0.f, 0.f, 0.f, 1.f);
+
+    /* check for nan values */
+    if (!g_qem or (vbar.x != vbar.x or vbar.y != vbar.y or vbar.z != vbar.z)) {
+        vec3 mp = vec3(0.5f) * (v->dstval + oppv()->dstval);
+        return vec4(mp.x, mp.y, mp.z, 1.0f);
+    }
+
     return vbar;
 }
