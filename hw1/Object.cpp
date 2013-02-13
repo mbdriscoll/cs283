@@ -426,7 +426,7 @@ Object::Collapse(Hedge *e0) {
     // make updates
 
     if (g_qem) {
-      vec4 newloc = e00->GetVBar(); 
+      vec4 newloc = e00->GetVBar();
       midpoint->MoveTo( vec3(newloc.x,newloc.y,newloc.z) );
     } else {
         midpoint->MoveTo( vec3(0.5f) * (midpoint->dstval + oldpoint->dstval) );
@@ -584,10 +584,10 @@ VertexSplit::Apply(Object* o) {
     if (vB) vB->edge = e11;
 
     /* register primitives with Object */
-    o->hedges.insert(e00); if (g_qem) e00->handle = o->queue.push(e00);
-    o->hedges.insert(e01); if (g_qem) e01->handle = o->queue.push(e01);
-    o->hedges.insert(e02); if (g_qem) e02->handle = o->queue.push(e02);
-    if (e10) { o->hedges.insert(e10); if (g_qem) e00->handle = o->queue.push(e10); }
+    o->hedges.insert(e00);            if (g_qem) e00->handle = o->queue.push(e00);
+    o->hedges.insert(e01);            if (g_qem) e01->handle = o->queue.push(e01);
+    o->hedges.insert(e02);            if (g_qem) e02->handle = o->queue.push(e02);
+    if (e10) { o->hedges.insert(e10); if (g_qem) e10->handle = o->queue.push(e10); }
     if (e11) { o->hedges.insert(e11); if (g_qem) e11->handle = o->queue.push(e11); }
     if (e12) { o->hedges.insert(e12); if (g_qem) e12->handle = o->queue.push(e12); }
 
