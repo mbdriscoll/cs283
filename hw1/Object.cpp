@@ -535,7 +535,18 @@ Object::Collapse(Hedge *e0) {
     if (delete_va) vertices.erase(vA);
     if (delete_vb) vertices.erase(vB);
 
-    DEBUG_ASSERT( this->check() );
+    /* collapse fins */
+#if COLLAPSE
+    if (e01->pair && e01->pair->IsDegenerate()) {
+        printf("degen A\n");
+        state->degenA = this->Collapse(e01->pair);
+    }
+
+    if (e11 && e11->pair && e11->pair->IsDegenerate()) {
+        printf("degen B\n");
+        state->degenB = this->Collapse(e11->pair);
+    }
+#endif
 
     /* update quadrics */
     foreach(Vertex* neighbor, midpoint->Vertices())
@@ -548,16 +559,7 @@ Object::Collapse(Hedge *e0) {
         queue.update(h->next->next->handle, h->next->next);
     }
 
-    /* collapse fins */
-    if (e01->pair && e01->pair->IsDegenerate()) {
-        printf("degen A\n");
-        state->degenA = this->Collapse(e01->pair);
-    }
-    if (e11 && e11->pair && e11->pair->IsDegenerate()) {
-        printf("degen B\n");
-        state->degenB = this->Collapse(e11->pair);
-    }
-
+    DEBUG_ASSERT( this->check() );
 
     return state;
 }
