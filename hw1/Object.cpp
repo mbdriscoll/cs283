@@ -158,6 +158,9 @@ int Object::check() {
     int num_boundaries = 0;
     int hno = 0;
     foreach(Hedge* h, this->hedges) {
+        /* next is defined */
+        assert(h->next);
+
         /* pair pointers are reflexive */
         if (h->pair != NULL)
             assert(h == h->pair->pair);
@@ -257,7 +260,7 @@ Face::Normal() {
     vec3 v0 = this->edge->v->Position();
     vec3 v1 = this->edge->next->v->Position();
     vec3 v2 = this->edge->next->next->v->Position();
-    return normalize( cross(v2-v1, v1-v0) );
+    return normalize( cross(v1-v0, v2-v1) );
 }
 
 bool
@@ -352,7 +355,7 @@ Object::DrawNormals(int vNorms, int fNorms) {
     if (p == h->GetMidpoint())
         glColor3f(1.0f, 0.0f, 1.0f); // magenta
     else
-        glColor3f(1.0f, 0.6f, 1.0f); // orange
+        glColor3f(1.0f, 1.0f, 0.0f); // yellow
     glPointSize(10.0f);
     glBegin(GL_POINTS);
     glVertex3f(p.x, p.y, p.z);
@@ -363,7 +366,7 @@ void
 Vertex::DrawNormal() {
     vec3 norm = vec3(0.5f) * normalize( Normal() );
     vec3 pos = Position();
-    vec3 end = pos + norm;
+    vec3 end = pos - norm;
 
     glVertex3fv( (GLfloat*) &pos );
     glVertex3fv( (GLfloat*) &end );
@@ -374,7 +377,7 @@ Face::DrawNormal() {
     vec3 centroid = vec3(1.0/3.0) *
         (edge->v->Position()+ edge->next->v->Position()+ edge->next->next->v->Position());
     vec3 normal = vec3(0.5f) * normalize( Normal() );
-    vec3 end = centroid + normal;
+    vec3 end = centroid - normal;
 
     glVertex3fv( (GLfloat*) &centroid );
     glVertex3fv( (GLfloat*) &end );
@@ -404,12 +407,12 @@ VertexSplit*
 Object::CollapseNext() {
     Hedge *e0 = PeekNext();
 
-#if DEBUG
-    printf("vbar:\n"); glm_print(e0->GetVBar());
-    printf("Q:   \n"); glm_print(e0->GetQ());
-#endif
-    if (g_qem)
-        printf("Collapsing edge with error: %g\n", e0->GetError());
+    //printf("vbar:\n"); glm_print(e0->GetVBar());
+    //printf("Q:   \n"); glm_print(e0->GetQ());
+
+    //if (g_qem)
+        //printf("Collapsing edge with error: %g\n", e0->GetError());
+
     return this->Collapse(e0);
 }
 
@@ -454,6 +457,7 @@ Object::Collapse(Hedge *e0) {
     // -------------------------------------------------------
     // make updates
 
+#if 0
     vec3 mp = e00->GetMidpoint();
     if (newloc.x != mp.x || newloc.y != mp.y || newloc.z != mp.z)
         printf("Move vertex from %f %f %f to %f %f %f\n",
@@ -461,6 +465,7 @@ Object::Collapse(Hedge *e0) {
                 newloc.x, newloc.y, newloc.z);
     else
         printf("Move vertex to midpoint.\n");
+#endif
 
     midpoint->MoveTo( newloc );
 
@@ -532,16 +537,6 @@ Object::Collapse(Hedge *e0) {
 
     DEBUG_ASSERT( this->check() );
 
-    /* collapse fins */
-    if (e01->pair && e01->pair->IsDegenerate()) {
-        printf("A is degen\n");
-        //state->degenA = this->Collapse(e01->pair);
-    }
-    if (e11 && e11->pair && e11->pair->IsDegenerate()) {
-        printf("B is degen\n");
-        //state->degenB = this->Collapse(e11->pair);
-    }
-
     /* update quadrics */
     foreach(Vertex* neighbor, midpoint->Vertices())
       neighbor->UpdateQ();
@@ -552,6 +547,17 @@ Object::Collapse(Hedge *e0) {
         queue.update(h->next->handle, h->next);
         queue.update(h->next->next->handle, h->next->next);
     }
+
+    /* collapse fins */
+    if (e01->pair && e01->pair->IsDegenerate()) {
+        printf("degen A\n");
+        state->degenA = this->Collapse(e01->pair);
+    }
+    if (e11 && e11->pair && e11->pair->IsDegenerate()) {
+        printf("degen B\n");
+        state->degenB = this->Collapse(e11->pair);
+    }
+
 
     return state;
 }
@@ -619,7 +625,7 @@ VertexSplit::Apply(Object* o) {
     if (e12 && e12->pair) e12->pair->pair = e12;
 
     if (e10) DEBUG_ASSERT(e10->pair == e00);
-    DEBUG_ASSERT(e00->pair = e10);
+    DEBUG_ASSERT(e00->pair == e10);
 
     /* set vertex->edge pointers */
     target->edge = e02;
@@ -664,6 +670,7 @@ VertexSplit::VertexSplit(Hedge *e00)
     e11 = (e10) ? e10->next : NULL;
     e12 = (e10) ? e10->prev() : NULL;
     if (e10) DEBUG_ASSERT(e10->pair == e00);
+
 
     f0 = e00->f;
     f1 = (e10) ? e10->f: NULL;
@@ -725,9 +732,13 @@ Vertex::MoveTo(vec4 p) {
 
 void
 Vertex::MoveTo(vec3 dval) {
+#if ANIMATE
     srcval = Position();
     dstval = dval;
     framesleft = N_FRAMES_PER_SPLIT;
+#else
+    dstval = srcval = dval;
+#endif
 }
 
 glm::vec3
@@ -737,8 +748,12 @@ Vertex::Position() {
 
 void
 Vertex::MoveFrom(vec3 sval) {
+#if ANIMATE
     srcval = sval;
     framesleft = N_FRAMES_PER_SPLIT;
+#else
+    srcval = dstval;
+#endif
 }
 
 
@@ -751,7 +766,8 @@ Vertex::UpdateQ() {
         vec3 dv = Position() * norm; // element-wise
         vec4 p(norm.x, norm.y, norm.z, 0.0f - dv.x - dv.y - dv.z); /* = [a b c d] */
 
-#if DEBUG
+#if 0
+#define TOLERANCE (2.0f*FLT_EPSILON)
         assert(h->v == this);
         //printf("using p:"); glm_print(p);
         vec3 o0 = h->v->Position();
@@ -760,17 +776,17 @@ Vertex::UpdateQ() {
         float delta0 = 0.0f - (p.x*o0.x + p.y*o0.y + p.z*o0.z + p.w);
         float delta1 = 0.0f - (p.x*o1.x + p.y*o1.y + p.z*o1.z + p.w);
         float delta2 = 0.0f - (p.x*o2.x + p.y*o2.y + p.z*o2.z + p.w);
-        if (fabs(delta0) > FLT_EPSILON) {
-            printf("bad delta0: %1.9f\n", delta0);
-            assert(fabs(delta0) < 2.0f * FLT_EPSILON);
+        if (fabs(delta0) > TOLERANCE) {
+            printf("bad delta0: %1.9f > %1.9f\n", delta0, TOLERANCE);
+            assert(fabs(delta0) < TOLERANCE);
         }
-        if (fabs(delta1) > 2.0f * FLT_EPSILON) {
-            printf("bad delta1: %1.9f > %1.9f\n", delta1, 2.0f*FLT_EPSILON);
-            assert(fabs(delta1) < 2.0f * FLT_EPSILON);
+        if (fabs(delta1) > TOLERANCE) {
+            printf("bad delta1: %1.9f > %1.9f\n", delta1, TOLERANCE);
+            assert(fabs(delta1) < TOLERANCE);
         }
-        if (fabs(delta2) > 2.0f * FLT_EPSILON) {
-            printf("bad delta2: %1.9f\n", delta2);
-            assert(fabs(delta2) < 2.0f * FLT_EPSILON);
+        if (fabs(delta2) > TOLERANCE) {
+            printf("bad delta2: %1.9f > %1.9f\n", delta2, TOLERANCE);
+            assert(fabs(delta2) < TOLERANCE);
         }
 #endif
 
@@ -823,7 +839,7 @@ Hedge::GetVBar() {
     Q[2][3] = 0.0f;
     Q[3][3] = 1.0f;
 
-    if (g_qem and determinant(Q) != 0.0f) {
+    if (false) {//g_qem and determinant(Q) != 0.0f) {
         vec4 ans = inverse(Q) * vec4(0.f, 0.f, 0.f, 1.f);
         assert(ans.x == ans.x);
         assert(ans.y == ans.y);
