@@ -22,7 +22,8 @@ public:
     glm::vec3 srcval; // starting location of vertex
     glm::vec3 dstval; // ending location of vertex
     int framesleft; // number of remaining animation frames
-    Hedge* edge;
+    std::set<Hedge*> edges;
+    Hedge* edge();
     Vertex* child;
 
     Vertex(glm::vec3 val);

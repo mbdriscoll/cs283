@@ -86,9 +86,9 @@ Object::Object(FILE* input) {
         Hedge *h1 = new Hedge(v1, h0,   face);
         Hedge *h2 = new Hedge(v2, h1,   face);
 
-        v0->edge = h1;
-        v1->edge = h2;
-        v2->edge = h0;
+        v0->edges.insert(h1);
+        v1->edges.insert(h2);
+        v2->edges.insert(h0);
 
         h0->next = h2;
         face->edge = h0;
@@ -181,7 +181,7 @@ int Object::check() {
             assert(h->v != h->oppv());
 
         /* vertex.edge ptr is set */
-        assert(h->v->edge != NULL);
+        assert(h->v->edges.size() != 0);
 
         /* edges in opp direction */
         if (h->pair != NULL) {
@@ -199,14 +199,16 @@ int Object::check() {
 
     foreach(Vertex *v, vertices) {
         /* vertex-to-edge pointers don't align with edge-to-vertex pointers */
-        assert(v->edge->next->v == v);
+        foreach(Hedge* e, v->edges)
+            assert(e->next->v == v);
 
         /* Hedges returns hedges that point to this */
         foreach(Hedge* h, v->Hedges())
             assert(h->v == v);
 
         /* membership check */
-        assert( hedges.find(v->edge) != hedges.end() );
+        foreach(Hedge* e, v->edges)
+            assert( hedges.find(e) != hedges.end() );
 
         /* valence check -- expensive */ /*
         int expected_valence = v->Hedges().size();
@@ -301,7 +303,7 @@ Hedge::oppv() {
     return this->next->v;
 }
 
-Vertex::Vertex(vec3 val) : edge(NULL), child(NULL),
+Vertex::Vertex(vec3 val) :
     dstval(val), srcval(val), framesleft(0)
 { }
 
@@ -385,7 +387,7 @@ Face::DrawNormal() {
 
 glm::vec3
 Vertex::Normal() {
-    vec3 normal = edge->f->Normal();;
+    vec3 normal = edge()->f->Normal();;
     Hedge *e;
 
     set<Hedge*> neighbors = Hedges();
@@ -499,23 +501,23 @@ Object::Collapse(Hedge *e0) {
 #endif
 
     // make sure midpoint.edge is still accurate
-    if      (e11 && e11->pair) midpoint->edge = e11->pair;
-    else if (e02 && e02->pair) midpoint->edge = e02->pair->prev();
-    else if (e01 && e01->pair) midpoint->edge = e01->pair;
-    else if (e12 && e12->pair) midpoint->edge = e12->pair->prev();
+    if      (e11 && e11->pair) midpoint->edges.insert(e11->pair);
+    else if (e02 && e02->pair) midpoint->edges.insert(e02->pair->prev());
+    else if (e01 && e01->pair) midpoint->edges.insert(e01->pair);
+    else if (e12 && e12->pair) midpoint->edges.insert(e12->pair->prev());
     else    delete_mp = true;
 
     // make sure vA.edge is still accurate
-    if (vA && vA->edge == e01) {
-        if      (e02 && e02->pair) vA->edge = e02->pair;
-        else if (e01 && e01->pair) vA->edge = e01->pair->prev();
+    if (vA) {
+        if      (e02 && e02->pair) vA->edges.insert(e02->pair);
+        else if (e01 && e01->pair) vA->edges.insert(e01->pair->prev());
         else    delete_va = true;
     }
 
     // make sure vB.edge is still accurate
-    if (vB && vB->edge == e11) {
-        if      (e12 && e12->pair) vB->edge = e12->pair;
-        else if (e11 && e11->pair) vB->edge = e11->pair->prev();
+    if (vB) {
+        if      (e12 && e12->pair) vB->edges.insert(e12->pair);
+        else if (e11 && e11->pair) vB->edges.insert(e11->pair->prev());
         else    delete_vb = true;
     }
 
@@ -566,26 +568,7 @@ Object::Collapse(Hedge *e0) {
 
 set<Hedge*>
 Vertex::Hedges() {
-    Hedge *e;
-    set<Hedge*> hedges;
-    hedges.insert(edge->next);
-
-    // forward around vertex
-    for(e = edge->next->pair; e != NULL && e != edge; e=e->next->pair) {
-        DEBUG_ASSERT(e->next->v == this);
-        DEBUG_ASSERT(hedges.find(e->next) == hedges.end());
-        hedges.insert(e->next);
-    }
-
-    // backward around vertex
-    if (e == NULL)
-        for(e = edge->pair; e != NULL && e->prev() != edge; e=e->prev()->pair) {
-            DEBUG_ASSERT(e->v == this);
-            DEBUG_ASSERT(hedges.find(e) == hedges.end());
-            hedges.insert(e);
-        }
-
-    return hedges;
+    return edges;
 }
 
 set<Vertex*>
@@ -630,10 +613,10 @@ VertexSplit::Apply(Object* o) {
     DEBUG_ASSERT(e00->pair == e10);
 
     /* set vertex->edge pointers */
-    target->edge = e02;
-    newpoint->edge = e00;
-    if (vA) vA->edge = e01;
-    if (vB) vB->edge = e11;
+    target->edges.insert(e02);
+    newpoint->edges.insert(e00);
+    if (vA) vA->edges.insert(e01);
+    if (vB) vB->edges.insert(e11);
 
     if (vA) DEBUG_ASSERT(e02->v == vA);
     if (vB) DEBUG_ASSERT(e12->v == vB);
@@ -856,4 +839,9 @@ Hedge::GetVBar() {
 vec3
 Hedge::GetMidpoint() {
     return vec3(0.5f) * (v->dstval + oppv()->dstval);
+}
+
+Hedge*
+Vertex::edge() {
+    return *(edges.begin());
 }
