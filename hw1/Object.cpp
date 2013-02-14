@@ -345,6 +345,14 @@ Object::DrawNormals(int vNorms, int fNorms) {
     glVertex3fv( (GLfloat*) &ll );
     glVertex3fv( (GLfloat*) &lr );
     glEnd();
+
+    /* draw a point at the next vbar */
+    vec4 p = h->GetVBar();
+    glPointSize(10.0f);
+    glColor3f(1.0f, 0.0f, 1.0f);
+    glBegin(GL_POINTS);
+    glVertex3f(p.x, p.y, p.z);
+    glEnd();
 }
 
 void
@@ -391,8 +399,13 @@ Object::PeekNext() {
 VertexSplit*
 Object::CollapseNext() {
     Hedge *e0 = PeekNext();
+
+#if DEBUG
+    printf("vbar:\n"); glm_print(e0->GetVBar());
+    printf("Q:   \n"); glm_print(e0->GetQ());
+#endif
     if (g_qem)
-        printf("Collapsing edge with error: %f\n", e0->GetError());
+        printf("Collapsing edge with error: %g\n", e0->GetError());
     return this->Collapse(e0);
 }
 
@@ -601,8 +614,8 @@ VertexSplit::Apply(Object* o) {
     if (e11 && e11->pair) e11->pair->pair = e11;
     if (e12 && e12->pair) e12->pair->pair = e12;
 
-    DEBUG_ASSERT(e00->pair = e10);
     if (e10) DEBUG_ASSERT(e10->pair == e00);
+    DEBUG_ASSERT(e00->pair = e10);
 
     /* set vertex->edge pointers */
     target->edge = e02;
@@ -646,6 +659,7 @@ VertexSplit::VertexSplit(Hedge *e00)
     e10 = e00->pair;
     e11 = (e10) ? e10->next : NULL;
     e12 = (e10) ? e10->prev() : NULL;
+    if (e10) DEBUG_ASSERT(e10->pair == e00);
 
     f0 = e00->f;
     f1 = (e10) ? e10->f: NULL;
@@ -654,8 +668,8 @@ VertexSplit::VertexSplit(Hedge *e00)
     target_loc = target->dstval;
     newpoint = e00->oppv();
 
-    targetHedges = std::set<Hedge*>(target->Hedges());
-    newpointHedges = std::set<Hedge*>(newpoint->Hedges());
+    targetHedges = target->Hedges();
+    newpointHedges = newpoint->Hedges();
 
     /* set vA and vB only if they need to be inserted */
     vA = (e02 && e02->v->Hedges().size() == 1) ? e02->v : NULL;
@@ -728,11 +742,34 @@ void
 Vertex::UpdateQ() {
     Q = mat4(0.0f);
     foreach(Hedge* h, Hedges()) {
-        // from: http://answers.yahoo.com/question/index?qid=20110121141727AAncAu4
-        // yes, i know, its from yahoo answers. lol
-        vec3 norm = h->f->Normal();
-        vec3 dv = dstval * norm; // element-wise
+        Face* face = h->f;
+        vec3 norm = face->Normal();
+        vec3 dv = Position() * norm; // element-wise
         vec4 p(norm.x, norm.y, norm.z, 0.0f - dv.x - dv.y - dv.z); /* = [a b c d] */
+
+#if DEBUG
+        assert(h->v == this);
+        //printf("using p:"); glm_print(p);
+        vec3 o0 = h->v->Position();
+        vec3 o1 = h->next->v->Position();
+        vec3 o2 = h->next->next->v->Position();
+        float delta0 = 0.0f - (p.x*o0.x + p.y*o0.y + p.z*o0.z + p.w);
+        float delta1 = 0.0f - (p.x*o1.x + p.y*o1.y + p.z*o1.z + p.w);
+        float delta2 = 0.0f - (p.x*o2.x + p.y*o2.y + p.z*o2.z + p.w);
+        if (fabs(delta0) > FLT_EPSILON) {
+            printf("bad delta0: %1.9f\n", delta0);
+            assert(fabs(delta0) < 2.0f * FLT_EPSILON);
+        }
+        if (fabs(delta1) > 2.0f * FLT_EPSILON) {
+            printf("bad delta1: %1.9f > %1.9f\n", delta1, 2.0f*FLT_EPSILON);
+            assert(fabs(delta1) < 2.0f * FLT_EPSILON);
+        }
+        if (fabs(delta2) > 2.0f * FLT_EPSILON) {
+            printf("bad delta2: %1.9f\n", delta2);
+            assert(fabs(delta2) < 2.0f * FLT_EPSILON);
+        }
+#endif
+
         Q += outerProduct(p, p);
 
 #if 0
