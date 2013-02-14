@@ -260,7 +260,7 @@ Face::Normal() {
     vec3 v0 = this->edge->v->Position();
     vec3 v1 = this->edge->next->v->Position();
     vec3 v2 = this->edge->next->next->v->Position();
-    return normalize( cross(v1-v0, v2-v1) );
+    return normalize( vec3(-1.0) * cross(v1-v0, v2-v1) );
 }
 
 bool
@@ -366,7 +366,7 @@ void
 Vertex::DrawNormal() {
     vec3 norm = vec3(0.5f) * normalize( Normal() );
     vec3 pos = Position();
-    vec3 end = pos - norm;
+    vec3 end = pos + norm;
 
     glVertex3fv( (GLfloat*) &pos );
     glVertex3fv( (GLfloat*) &end );
@@ -377,7 +377,7 @@ Face::DrawNormal() {
     vec3 centroid = vec3(1.0/3.0) *
         (edge->v->Position()+ edge->next->v->Position()+ edge->next->next->v->Position());
     vec3 normal = vec3(0.5f) * normalize( Normal() );
-    vec3 end = centroid - normal;
+    vec3 end = centroid + normal;
 
     glVertex3fv( (GLfloat*) &centroid );
     glVertex3fv( (GLfloat*) &end );
