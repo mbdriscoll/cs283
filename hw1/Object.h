@@ -69,6 +69,7 @@ public:
     float GetError();
     glm::vec4 GetVBar();
     glm::mat4 GetQ();
+    glm::vec3 GetMidpoint();
 };
 
 class Object {

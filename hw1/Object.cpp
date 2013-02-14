@@ -214,7 +214,7 @@ int Object::check() {
         assert(actual_valence == expected_valence);
         */
 
-        /* hedges make rings around vertices */
+        /* hedges make rings around vertices */ /*
         int nring_max = 100;
         int nring_hedges = 0;
         for(Hedge *starte = v->edge->next->pair;
@@ -229,7 +229,7 @@ int Object::check() {
                 starte=starte->prev()->pair)
             nring_hedges += 1;
         assert(nring_hedges < nring_max);
-
+        */
     }
 
     foreach(Face *f, faces) {
@@ -437,6 +437,14 @@ Object::Collapse(Hedge *e0) {
     // -------------------------------------------------------
     // make updates
 
+    vec3 mp = e00->GetMidpoint();
+    if (newloc.x != mp.x || newloc.y != mp.y || newloc.z != mp.z)
+        printf("Move vertex from %f %f %f to %f %f %f\n",
+                midpoint->dstval.x, midpoint->dstval.y, midpoint->dstval.z,
+                newloc.x, newloc.y, newloc.z);
+    else
+        printf("Move vertex to midpoint.\n");
+
     midpoint->MoveTo( newloc );
 
     // update vertex points from edges pointing to old vertex
@@ -505,11 +513,17 @@ Object::Collapse(Hedge *e0) {
     if (delete_va) vertices.erase(vA);
     if (delete_vb) vertices.erase(vB);
 
+    DEBUG_ASSERT( this->check() );
+
     /* collapse fins */
-    if (e01->pair && e01->pair->IsDegenerate())
-        state->degenA = this->Collapse(e01->pair);
-    if (e11 && e11->pair && e11->pair->IsDegenerate())
-        state->degenB = this->Collapse(e11->pair);
+    if (e01->pair && e01->pair->IsDegenerate()) {
+        printf("A is degen\n");
+        //state->degenA = this->Collapse(e01->pair);
+    }
+    if (e11 && e11->pair && e11->pair->IsDegenerate()) {
+        printf("B is degen\n");
+        //state->degenB = this->Collapse(e11->pair);
+    }
 
     /* update quadrics */
     foreach(Vertex* neighbor, midpoint->Vertices())
@@ -521,8 +535,6 @@ Object::Collapse(Hedge *e0) {
         queue.update(h->next->handle, h->next);
         queue.update(h->next->next->handle, h->next->next);
     }
-
-    DEBUG_ASSERT( this->check() );
 
     return state;
 }
@@ -598,6 +610,9 @@ VertexSplit::Apply(Object* o) {
     if (vA) vA->edge = e01;
     if (vB) vB->edge = e11;
 
+    if (vA) DEBUG_ASSERT(e02->v == vA);
+    if (vB) DEBUG_ASSERT(e12->v == vB);
+
     /* register primitives with Object */
     o->hedges.insert(e00);            if (g_qem) e00->handle = o->queue.push(e00);
     o->hedges.insert(e01);            if (g_qem) e01->handle = o->queue.push(e01);
@@ -617,6 +632,8 @@ VertexSplit::Apply(Object* o) {
     newpoint->MoveFrom(target->Position());
     if (vA) vA->MoveFrom(target->Position());
     if (vB) vB->MoveFrom(target->Position());
+
+    DEBUG_ASSERT( o->check() );
 }
 
 VertexSplit::VertexSplit(Hedge *e00)
@@ -654,6 +671,9 @@ Hedge::IsDegenerate() {
     /* Not degen if this is a boundary hedge */
     if (this->pair == NULL)
         return false;
+
+    assert(v == this->pair->oppv());
+    assert(oppv() == this->pair->v);
 
     /* check if other vertex in each face is in same location */
     Vertex *v0 = this->prev()->v,
@@ -712,8 +732,7 @@ Vertex::UpdateQ() {
         // yes, i know, its from yahoo answers. lol
         vec3 norm = h->f->Normal();
         vec3 dv = dstval * norm; // element-wise
-        vec4 p(norm.x, norm.y, norm.z, -1.f*dv.x - dv.y - dv.z); /* = [a b c d] */
-        mat4 op = outerProduct(p,p);
+        vec4 p(norm.x, norm.y, norm.z, 0.0f - dv.x - dv.y - dv.z); /* = [a b c d] */
         Q += outerProduct(p, p);
 
 #if 0
@@ -734,8 +753,10 @@ QEMCompare::operator() (Hedge *x, Hedge* y) const {
           y_error = y->GetError();
 
     /* reject nans */
-    assert(x_error == x_error);
-    assert(y_error == y_error);
+    if (g_qem) {
+        assert(x_error == x_error);
+        assert(y_error == y_error);
+    }
 
     return x_error > y_error;
 }
@@ -749,21 +770,31 @@ Hedge::GetError() {
 
 mat4
 Hedge::GetQ() {
-    mat4 Q = v->Q + oppv()->Q;
-    Q[0][3] = Q[1][3] = Q[2][3] = 0.0f; Q[3][3] = 1.0f;
-    return Q;
+    return v->Q + oppv()->Q;
 }
 
 vec4
 Hedge::GetVBar() {
     mat4 Q = GetQ();
-    vec4 vbar = inverse(Q) * vec4(0.f, 0.f, 0.f, 1.f);
 
-    /* check for nan values */
-    if (!g_qem or (vbar.x != vbar.x or vbar.y != vbar.y or vbar.z != vbar.z)) {
-        vec3 mp = vec3(0.5f) * (v->dstval + oppv()->dstval);
+    Q[0][3] = 0.0f;
+    Q[1][3] = 0.0f;
+    Q[2][3] = 0.0f;
+    Q[3][3] = 1.0f;
+
+    if (g_qem and determinant(Q) != 0.0f) {
+        vec4 ans = inverse(Q) * vec4(0.f, 0.f, 0.f, 1.f);
+        assert(ans.x == ans.x);
+        assert(ans.y == ans.y);
+        assert(ans.z == ans.z);
+        return ans;
+    } else {
+        vec3 mp = GetMidpoint();
         return vec4(mp.x, mp.y, mp.z, 1.0f);
     }
+}
 
-    return vbar;
+vec3
+Hedge::GetMidpoint() {
+    return vec3(0.5f) * (v->dstval + oppv()->dstval);
 }
