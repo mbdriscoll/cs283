@@ -347,9 +347,13 @@ Object::DrawNormals(int vNorms, int fNorms) {
     glEnd();
 
     /* draw a point at the next vbar */
-    vec4 p = h->GetVBar();
+    vec4 p4 = h->GetVBar();
+    vec3 p = vec3(p4.x, p4.y, p4.z);
+    if (p == h->GetMidpoint())
+        glColor3f(1.0f, 0.0f, 1.0f); // magenta
+    else
+        glColor3f(1.0f, 0.6f, 1.0f); // orange
     glPointSize(10.0f);
-    glColor3f(1.0f, 0.0f, 1.0f);
     glBegin(GL_POINTS);
     glVertex3f(p.x, p.y, p.z);
     glEnd();
