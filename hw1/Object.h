@@ -40,6 +40,7 @@ public:
     std::set<Vertex*> Vertices();
     glm::mat4 Q;
     void UpdateQ();
+    void PullHedge(Hedge *newIncidentEdge, Vertex *oldpoint=NULL);
 };
 
 class Face {
@@ -60,7 +61,7 @@ public:
     Vertex* v;
     Heap::handle_type handle;
 
-    Hedge(Vertex *v, Hedge *next, Face *f);
+    Hedge(Vertex *v, Hedge *next=NULL, Face *f=NULL);
     Hedge* prev();
     Vertex* oppv();
 

@@ -83,15 +83,9 @@ Object::Object(FILE* input) {
                *v2 = vertvec[vi2];
 
         Hedge *h0 = new Hedge(v0, NULL, face);
-        Hedge *h1 = new Hedge(v1, h0,   face);
-        Hedge *h2 = new Hedge(v2, h1,   face);
-
-        v0->edges.insert(h1);
-        v1->edges.insert(h2);
-        v2->edges.insert(h0);
-
-        h0->next = h2;
-        face->edge = h0;
+        Hedge *h2 = new Hedge(v2, h0,   face);
+        Hedge *h1 = new Hedge(v1, h2,   face);
+        h0->next = h1;
 
         faces.insert(face);
         hedges.insert(h0);
@@ -106,6 +100,8 @@ Object::Object(FILE* input) {
     foreach (Hedge* h, this->hedges)
         h->pair = vtoe[VVpair(h->oppv(),h->v)];
 
+    this->check();
+
     // Compute Q values
     foreach(Vertex* v, vertices)
         v->UpdateQ();
@@ -113,8 +109,6 @@ Object::Object(FILE* input) {
     // Put edges in priority queue
     foreach(Hedge* e, hedges)
         e->handle = queue.push(e);
-
-    this->check();
 }
 
 
@@ -160,6 +154,8 @@ int Object::check() {
     foreach(Hedge* h, this->hedges) {
         /* next is defined */
         assert(h->next);
+        assert(h->next->next);
+        assert(h->next->next->next == h);
 
         /* pair pointers are reflexive */
         if (h->pair != NULL)
@@ -200,7 +196,7 @@ int Object::check() {
     foreach(Vertex *v, vertices) {
         /* vertex-to-edge pointers don't align with edge-to-vertex pointers */
         foreach(Hedge* e, v->edges)
-            assert(e->next->v == v);
+            assert(e->v == v);
 
         /* Hedges returns hedges that point to this */
         foreach(Hedge* h, v->Hedges())
@@ -252,7 +248,11 @@ int Object::check() {
 }
 
 Hedge::Hedge(Vertex *v, Hedge *next, Face *f) :
-  v(v), next(next), f(f), pair(NULL) { }
+    v(v), next(next), f(f), pair(NULL)
+{
+    v->PullHedge(this);
+    f->edge = this;
+}
 
 Face::Face() : edge(NULL)
 { }
@@ -262,7 +262,7 @@ Face::Normal() {
     vec3 v0 = this->edge->v->Position();
     vec3 v1 = this->edge->next->v->Position();
     vec3 v2 = this->edge->next->next->v->Position();
-    return normalize( vec3(-1.0) * cross(v1-v0, v2-v1) );
+    return normalize( cross(v1-v0, v2-v1) );
 }
 
 bool
@@ -445,9 +445,6 @@ Object::Collapse(Hedge *e0) {
            *vA = (e00) ? e00->prev()->v : NULL,
            *vB = (e10) ? e10->prev()->v : NULL;
 
-    set<Hedge*> mNeighbors = midpoint->Hedges(),
-        oNeighbors = oldpoint->Hedges();
-
     bool delete_mp = false,
          delete_va = false,
          delete_vb = false;
@@ -472,10 +469,11 @@ Object::Collapse(Hedge *e0) {
     midpoint->MoveTo( newloc );
 
     // update vertex points from edges pointing to old vertex
-    foreach(Hedge* hedge, oNeighbors) {
-        DEBUG_ASSERT(hedge->v == oldpoint);
-        hedge->v = midpoint;
-    }
+    set<Hedge*> old_edges = oldpoint->edges;
+    if (e01) old_edges.erase(e01);
+    if (e10) old_edges.erase(e10);
+    foreach(Hedge* hedge, old_edges)
+        midpoint->PullHedge(hedge, oldpoint);
 
     // fix up pairs
     if (e01 && e01->pair) e01->pair->pair = (e02) ? e02->pair : NULL;
@@ -483,42 +481,48 @@ Object::Collapse(Hedge *e0) {
     if (e11 && e11->pair) e11->pair->pair = (e12) ? e12->pair : NULL;
     if (e12 && e12->pair) e12->pair->pair = (e11) ? e11->pair : NULL;
 
-
 #if DEBUG
-    if (e11) assert(mNeighbors.find(e11) != mNeighbors.end());
-    if (e10) assert(mNeighbors.find(e10) == mNeighbors.end());
-    if (e12) assert(mNeighbors.find(e12) == mNeighbors.end());
-    assert(mNeighbors.find(e01) == mNeighbors.end());
-    assert(mNeighbors.find(e00) != mNeighbors.end());
-    assert(mNeighbors.find(e02) == mNeighbors.end());
+    if (e11) assert(midpoint->edges.find(e11) != midpoint->edges.end());
+    if (e10) assert(midpoint->edges.find(e10) == midpoint->edges.end());
+    if (e12) assert(midpoint->edges.find(e12) == midpoint->edges.end());
+    assert(midpoint->edges.find(e01) == midpoint->edges.end());
+    assert(midpoint->edges.find(e00) != midpoint->edges.end());
+    assert(midpoint->edges.find(e02) == midpoint->edges.end());
 
-    assert(oNeighbors.find(e01) != oNeighbors.end());
-    assert(oNeighbors.find(e00) == oNeighbors.end());
-    assert(oNeighbors.find(e02) == oNeighbors.end());
-    if (e11) assert(oNeighbors.find(e11) == oNeighbors.end());
-    if (e10) assert(oNeighbors.find(e10) != oNeighbors.end());
-    if (e12) assert(oNeighbors.find(e12) == oNeighbors.end());
+    assert(oldpoint->edges.find(e01) != oldpoint->edges.end());
+    assert(oldpoint->edges.find(e00) == oldpoint->edges.end());
+    assert(oldpoint->edges.find(e02) == oldpoint->edges.end());
+    if (e11) assert(oldpoint->edges.find(e11) == oldpoint->edges.end());
+    if (e10) assert(oldpoint->edges.find(e10) != oldpoint->edges.end());
+    if (e12) assert(oldpoint->edges.find(e12) == oldpoint->edges.end());
 #endif
 
-    // make sure midpoint.edge is still accurate
-    if      (e11 && e11->pair) midpoint->edges.insert(e11->pair);
-    else if (e02 && e02->pair) midpoint->edges.insert(e02->pair->prev());
-    else if (e01 && e01->pair) midpoint->edges.insert(e01->pair);
-    else if (e12 && e12->pair) midpoint->edges.insert(e12->pair->prev());
-    else    delete_mp = true;
+    if (e00) {
+        DEBUG_ASSERT(midpoint->edges.find(e00) !=
+                midpoint->edges.end());
+        midpoint->edges.erase(e00);
+    }
+    if (e11) {
+        DEBUG_ASSERT(midpoint->edges.find(e11) !=
+                midpoint->edges.end());
+        midpoint->edges.erase(e11);
+    }
+    delete_mp = (midpoint->edges.size() == 0);
 
     // make sure vA.edge is still accurate
     if (vA) {
-        if      (e02 && e02->pair) vA->edges.insert(e02->pair);
-        else if (e01 && e01->pair) vA->edges.insert(e01->pair->prev());
-        else    delete_va = true;
+        DEBUG_ASSERT(e02);
+        DEBUG_ASSERT(vA->edges.find(e02) != vA->edges.end());
+        vA->edges.erase(e02);
+        delete_va = (vA->edges.size() == 0);
     }
 
     // make sure vB.edge is still accurate
     if (vB) {
-        if      (e12 && e12->pair) vB->edges.insert(e12->pair);
-        else if (e11 && e11->pair) vB->edges.insert(e11->pair->prev());
-        else    delete_vb = true;
+        DEBUG_ASSERT(e12);
+        DEBUG_ASSERT(vB->edges.find(e12) != vB->edges.end());
+        vB->edges.erase(e12);
+        delete_vb = (vB->edges.size() == 0);
     }
 
     // remove geom from f/v/e sets
@@ -596,12 +600,8 @@ VertexSplit::Apply(Object* o) {
     target->MoveTo(target_loc);
 
     /* fix hedge->vertex pointers */
-#if DEBUG
-    foreach(Hedge* h, targetHedges)
-        assert(h->v == target);
-#endif
     foreach(Hedge* h, newpointHedges)
-        h->v = newpoint;
+        newpoint->PullHedge(h, target);
 
     /* fix up pairs */
     if (e01 && e01->pair) e01->pair->pair = e01;
@@ -613,10 +613,12 @@ VertexSplit::Apply(Object* o) {
     DEBUG_ASSERT(e00->pair == e10);
 
     /* set vertex->edge pointers */
-    target->edges.insert(e02);
-    newpoint->edges.insert(e00);
-    if (vA) vA->edges.insert(e01);
-    if (vB) vB->edges.insert(e11);
+             target->edges.insert(e00);
+    if (e11) target->edges.insert(e00);
+             newpoint->edges.insert(e01);
+    if (e10) newpoint->edges.insert(e01);
+    if (vA) vA->edges.insert(e02);
+    if (vB) vB->edges.insert(e12);
 
     if (vA) DEBUG_ASSERT(e02->v == vA);
     if (vB) DEBUG_ASSERT(e12->v == vB);
@@ -795,7 +797,7 @@ QEMCompare::operator() (Hedge *x, Hedge* y) const {
           y_error = y->GetError();
 
     /* reject nans */
-    if (g_qem) {
+    if (false && g_qem) {
         assert(x_error == x_error);
         assert(y_error == y_error);
     }
@@ -805,9 +807,9 @@ QEMCompare::operator() (Hedge *x, Hedge* y) const {
 
 float
 Hedge::GetError() {
-    mat4 Q = GetQ();
-    vec4 v_bar = GetVBar();
-    return dot(v_bar, Q * v_bar);
+    //mat4 Q = GetQ();
+    //vec4 v_bar = GetVBar();
+    return 1.0f; //dot(v_bar, Q * v_bar);
 }
 
 mat4
@@ -844,4 +846,17 @@ Hedge::GetMidpoint() {
 Hedge*
 Vertex::edge() {
     return *(edges.begin());
+}
+
+void
+Vertex::PullHedge(Hedge* newInEdge, Vertex *oldpoint) {
+    if (oldpoint) {
+       DEBUG_ASSERT(oldpoint == newInEdge->v);
+       DEBUG_ASSERT(oldpoint->edges.find(newInEdge) !=
+                    oldpoint->edges.end());
+       oldpoint->edges.erase(newInEdge);
+    }
+
+    edges.insert(newInEdge);
+    newInEdge->v = this;
 }
