@@ -199,7 +199,7 @@ int Object::check() {
             assert(e->v == v);
 
         /* Hedges returns hedges that point to this */
-        foreach(Hedge* h, v->Hedges())
+        foreach(Hedge* h, v->edges)
             assert(h->v == v);
 
         /* membership check */
@@ -316,7 +316,7 @@ Hedge::set_pair(Hedge* o) {
 
 int
 Vertex::valence() {
-    return Hedges().size();
+    return edges.size();
 }
 
 void
@@ -390,8 +390,7 @@ Vertex::Normal() {
     vec3 normal = edge()->f->Normal();;
     Hedge *e;
 
-    set<Hedge*> neighbors = Hedges();
-    foreach(Hedge *neighbor, neighbors)
+    foreach(Hedge *neighbor, edges)
         normal += neighbor->f->Normal();
 
     return normalize( normal );
@@ -559,7 +558,7 @@ Object::Collapse(Hedge *e0) {
       neighbor->UpdateQ();
 
     /* rebalance heap */
-    foreach(Hedge* h, midpoint->Hedges()) {
+    foreach(Hedge* h, midpoint->edges) {
         queue.update(h->handle, h);
         queue.update(h->next->handle, h->next);
         queue.update(h->next->next->handle, h->next->next);
@@ -570,17 +569,12 @@ Object::Collapse(Hedge *e0) {
     return state;
 }
 
-set<Hedge*>
-Vertex::Hedges() {
-    return edges;
-}
-
 set<Vertex*>
 Vertex::Vertices() {
     Hedge *e;
     set<Vertex*> neighbors;
 
-    foreach(Hedge* h, Hedges()) {
+    foreach(Hedge* h, edges) {
         assert(h->v == this);
         neighbors.insert(h->oppv());
         neighbors.insert(h->prev()->v);
@@ -666,12 +660,12 @@ VertexSplit::VertexSplit(Hedge *e00)
     target_loc = target->dstval;
     newpoint = e00->oppv();
 
-    targetHedges = target->Hedges();
-    newpointHedges = newpoint->Hedges();
+    targetHedges = target->edges;
+    newpointHedges = newpoint->edges;
 
     /* set vA and vB only if they need to be inserted */
-    vA = (e02 && e02->v->Hedges().size() == 1) ? e02->v : NULL;
-    vB = (e12 && e12->v->Hedges().size() == 1) ? e12->v : NULL;
+    vA = (e02 && e02->v->edges.size() == 1) ? e02->v : NULL;
+    vB = (e12 && e12->v->edges.size() == 1) ? e12->v : NULL;
 }
 
 bool
@@ -747,7 +741,7 @@ Vertex::MoveFrom(vec3 sval) {
 void
 Vertex::UpdateQ() {
     Q = mat4(0.0f);
-    foreach(Hedge* h, Hedges()) {
+    foreach(Hedge* h, edges) {
         Face* face = h->f;
         vec3 norm = face->Normal();
         vec3 dv = Position() * norm; // element-wise
