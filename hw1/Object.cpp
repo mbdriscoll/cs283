@@ -188,7 +188,10 @@ int Object::check() {
         /* membership checks */
         assert( faces.find(h->f) != faces.end() );
         assert( hedges.find(h->next) != hedges.end() );
-        assert( vertices.find(h->v) != vertices.end() );
+        if ( vertices.find(h->v) == vertices.end() ) {
+            printf("missing vertex %x\n", h->v);
+            assert( vertices.find(h->v) != vertices.end() );
+        }
         if (h->pair)
             assert( hedges.find(h->pair) != hedges.end() );
     }
@@ -487,13 +490,6 @@ Object::Collapse(Hedge *e0) {
     assert(midpoint->edges.find(e01) == midpoint->edges.end());
     assert(midpoint->edges.find(e00) != midpoint->edges.end());
     assert(midpoint->edges.find(e02) == midpoint->edges.end());
-
-    assert(oldpoint->edges.find(e01) != oldpoint->edges.end());
-    assert(oldpoint->edges.find(e00) == oldpoint->edges.end());
-    assert(oldpoint->edges.find(e02) == oldpoint->edges.end());
-    if (e11) assert(oldpoint->edges.find(e11) == oldpoint->edges.end());
-    if (e10) assert(oldpoint->edges.find(e10) != oldpoint->edges.end());
-    if (e12) assert(oldpoint->edges.find(e12) == oldpoint->edges.end());
 #endif
 
     if (e00) {
@@ -511,7 +507,7 @@ Object::Collapse(Hedge *e0) {
     // make sure vA.edge is still accurate
     if (vA) {
         DEBUG_ASSERT(e02);
-        DEBUG_ASSERT(vA->edges.find(e02) != vA->edges.end());
+        //DEBUG_ASSERT(vA->edges.find(e02) != vA->edges.end());
         vA->edges.erase(e02);
         delete_va = (vA->edges.size() == 0);
     }
@@ -519,7 +515,7 @@ Object::Collapse(Hedge *e0) {
     // make sure vB.edge is still accurate
     if (vB) {
         DEBUG_ASSERT(e12);
-        DEBUG_ASSERT(vB->edges.find(e12) != vB->edges.end());
+        //DEBUG_ASSERT(vB->edges.find(e12) != vB->edges.end());
         vB->edges.erase(e12);
         delete_vb = (vB->edges.size() == 0);
     }
@@ -585,7 +581,6 @@ Vertex::Vertices() {
 
 void
 VertexSplit::Apply(Object* o) {
-
     /* recreate fins in reverse order */
     if (degenB) degenB->Apply(o);
     if (degenA) degenA->Apply(o);
@@ -594,8 +589,10 @@ VertexSplit::Apply(Object* o) {
     target->MoveTo(target_loc);
 
     /* fix hedge->vertex pointers */
+    foreach(Hedge* h, targetHedges)
+        target->PullHedge(h);
     foreach(Hedge* h, newpointHedges)
-        newpoint->PullHedge(h, target);
+        newpoint->PullHedge(h);
 
     /* fix up pairs */
     if (e01 && e01->pair) e01->pair->pair = e01;
@@ -628,6 +625,9 @@ VertexSplit::Apply(Object* o) {
     o->faces.insert(f0);
     if (f1) o->faces.insert(f1);
 
+    //printf("old: %x  new: %x  va: %x  vb: %x\n", target, newpoint, vA, vB);
+    //DEBUG_ASSERT(o->vertices.find(target) != o->vertices.end());
+    o->vertices.insert(target);
     o->vertices.insert(newpoint);
     if (vA) o->vertices.insert(vA);
     if (vB) o->vertices.insert(vB);
@@ -843,14 +843,10 @@ Vertex::edge() {
 }
 
 void
-Vertex::PullHedge(Hedge* newInEdge, Vertex *oldpoint) {
-    if (oldpoint) {
-       DEBUG_ASSERT(oldpoint == newInEdge->v);
-       DEBUG_ASSERT(oldpoint->edges.find(newInEdge) !=
-                    oldpoint->edges.end());
-       oldpoint->edges.erase(newInEdge);
-    }
-
+Vertex::PullHedge(Hedge* newInEdge, Vertex *old) {
+    if (old)
+        DEBUG_ASSERT(newInEdge->v == old);
+    newInEdge->v->edges.erase(newInEdge);
     edges.insert(newInEdge);
     newInEdge->v = this;
 }
