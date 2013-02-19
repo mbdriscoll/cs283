@@ -358,7 +358,7 @@ idle() {
         if (g_model->vsplits.size() == 0) {
             printf("Doing edge pops\n");
             g_animateDirection = 0;
-        } else if (g_model->queue.size() <= 6) {
+        } else if (g_model->queue.size() <= 16) {
             printf("Doing vertex splits.\n");
             g_animateDirection = 1;
         }

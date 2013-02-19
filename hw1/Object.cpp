@@ -463,8 +463,8 @@ Object::CollapseNext() {
     //printf("vbar:\n"); glm_print(e0->GetVBar());
     //printf("Q:   \n"); glm_print(e0->GetQ());
 
-    if (g_qem)
-       printf("Collapsing edge with error: %g\n", e0->GetError());
+    //if (g_qem)
+       //printf("Collapsing edge with error: %g\n", e0->GetError());
 
     return this->Collapse(e0, e0->GetVBar());
 }
