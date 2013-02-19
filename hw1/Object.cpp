@@ -379,6 +379,7 @@ Object::DrawNormals(int vNorms, int fNorms) {
     if (queue.size() == 0)
         return;
 
+#if 0
     // Draw a quad by the next edge to collapse
     Hedge* h = PeekNext();
     Vertex *v0 = h->v,
@@ -420,6 +421,7 @@ Object::DrawNormals(int vNorms, int fNorms) {
         glVertex3fv(&(h->pair->next->next->v->dstval.x));
 
     glEnd();
+#endif
 }
 
 void
@@ -687,8 +689,8 @@ VertexSplit::Apply(Object* o) {
 
     /* make new vertices enter smoothly */
     newpoint->MoveFrom(target->Position());
-    if (vA) vA->MoveFrom(target->Position());
-    if (vB) vB->MoveFrom(target->Position());
+    //if (vA) vA->MoveFrom(target->Position());
+    //if (vB) vB->MoveFrom(target->Position());
 
     DEBUG_ASSERT( o->check() );
 }
