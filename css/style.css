@@ -1,0 +1,25 @@
+body {
+  padding-top: 20px;
+  padding-bottom: 10px;
+}
+.footer {
+  text-align: center;
+}
+.header {
+  margin-bottom: 20px;
+}
+.media-body {
+  padding-left: 20px;
+  padding-bottom: 16px;
+  text-align: justify;
+}
+h3 {
+  margin-top: 0px;
+}
+img.media-object {
+  padding-bottom: 16px;
+}
+.container-narrow {
+  margin: 0 auto;
+  max-width: 900px;
+}
