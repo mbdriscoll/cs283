@@ -159,7 +159,8 @@ display() {
     glFinish();
 
     if (g_hud.IsVisible()) {
-        g_hud.DrawString(10, -40,  "Vertices:   %d", g_model->vertices.size());
+        g_hud.DrawString(10, -40,  "Vertices:   %d/%d", g_model->vertices.size(),
+                g_model->vertices.size() + g_model->vsplits.size());
         g_hud.DrawString(10, -20,  "Faces:      %d", g_model->faces.size());
     }
 

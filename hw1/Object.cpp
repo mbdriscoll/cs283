@@ -742,7 +742,7 @@ Hedge::IsDegenerate() {
 
 void
 Object::Pop(bool many) {
-    int npops = (many) ? (int) (0.2f * (float) faces.size()) : 1;
+    int npops = (many) ? std::min(100, (int) (0.1f * (float) faces.size())) : 1;
     npops = std::min(npops, (int) faces.size() - 2);
     for(int i = 0; i < npops; i++)
         vsplits.push_back(this->CollapseNext());
@@ -750,7 +750,7 @@ Object::Pop(bool many) {
 
 void
 Object::Split(bool many) {
-    int nsplits = (many) ? (int) (0.2f * (float) vsplits.size()) : 1;
+    int nsplits = (many) ? std::min(100, (int) (0.1f * (float) vsplits.size())) : 1;
     nsplits = std::min(nsplits, (int) vsplits.size());
     for(int i = 0; i < nsplits; i++) {
         vsplits.back()->Apply(this);
