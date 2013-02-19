@@ -136,7 +136,7 @@ display() {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof (GLfloat) * 6, 0);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof (GLfloat) * 6, (float*)12);
 
-    g_model->DrawPoints();
+    //g_model->DrawPoints();
     g_model->DrawNormals(g_drawVertexNormals, g_drawFaceNormals);
 
     glEnable(GL_LIGHTING);

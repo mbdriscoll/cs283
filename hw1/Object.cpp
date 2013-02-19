@@ -6,7 +6,7 @@
 
 #include "Object.h"
 
-#define DEBUG 1
+#define DEBUG 0
 
 #if DEBUG
     #define DEBUG_ASSERT(cnd) assert((cnd));
@@ -22,20 +22,33 @@ extern int g_qem;
 typedef std::pair<Vertex*,Vertex*> VVpair;
 
 void glm_print(glm::vec3 v) {
-    printf("[ %f %f %f ]\n", v.x, v.y, v.z);
+    printf("{%1.3f,%1.3f,%1.3f}\n", v.x, v.y, v.z);
 }
 
 void glm_print(glm::vec4 v) {
-    printf("[ %f %f %f %f ]\n", v.x, v.y, v.z, v.z);
+    printf("{%1.3f,%1.3f,%1.3f,%1.3f}\n", v.x, v.y, v.z, v.w);
 }
 void glm_print(glm::mat4 m) {
-    printf("[ %f %f %f %f\n  %f %f %f %f\n  %f %f %f %f\n  %f %f %f %f ]\n",
+    printf("{{%1.3f,%1.3f,%1.3f,%1.3f},{%1.3f,%1.3f,%1.3f,%1.3f},{%1.3f,%1.3f,%1.3f,%1.3f},{%1.3f,%1.3f,%1.3f,%1.3f}}\n",
             m[0][0], m[1][0], m[2][0], m[3][0],
             m[0][1], m[1][1], m[2][1], m[3][1],
             m[0][2], m[1][2], m[2][2], m[3][2],
             m[0][3], m[1][3], m[2][3], m[3][3]);
 
 }
+
+glm::vec3 dehomogenize(glm::vec4 v) {
+    return vec3(1.0f/v.w) * vec3(v.x, v.y, v.z);
+}
+
+glm::vec4 homogenize(glm::vec4 v) {
+    return vec4(v.x/v.w, v.y/v.w, v.z/v.w, 1.0f);
+}
+
+glm::vec4 homogenize(glm::vec3 v) {
+    return vec4(v.x, v.y, v.z, 1.0f);
+}
+
 
 Object::Object(FILE* input) {
     int scanned;
@@ -377,21 +390,20 @@ Object::DrawNormals(int vNorms, int fNorms) {
     glEnd();
 
     /* draw a point at the next vbar */
-    vec4 p4 = h->GetVBar();
-    vec3 p = vec3(p4.x, p4.y, p4.z);
+    vec3 p = dehomogenize( h->GetVBar() );
     vec3 end = h->v->dstval;
 
-    glColor3f(1.0f, 0.0f, 1.0f); // magenta
     glPointSize(10.0f);
     glBegin(GL_POINTS);
 
-    glVertex3f(p.x, p.y, p.z);
+    glColor3f(1.0f, 0.0f, 1.0f); // magenta
+    glVertex3fv(&p.x);
 
     glColor3f(1.0f, 1.0f, 0.2f); // midoint is green
     glVertex3fv(&(h->v->dstval.x));
 
-    glColor3f(0.2f, 0.2f, 0.2f); // oldpoint is gray
-    glVertex3fv(&(h->oppv()->dstval.x));
+    //glColor3f(0.7f, 0.7f, 0.7f); // oldpoint is gray
+    //glVertex3fv(&(h->oppv()->dstval.x));
 
     glColor3f(1.0f, 0.0f, 0.0f); // vA is red
     glVertex3fv(&(h->next->next->v->dstval.x));
@@ -578,6 +590,7 @@ Object::Collapse(Hedge *e00, vec4 newloc) {
     }
 
     /* update quadrics */
+    midpoint->UpdateQ();
     foreach(Vertex* neighbor, midpoint->Vertices())
       neighbor->UpdateQ();
 
@@ -745,7 +758,7 @@ Vertex::MoveTo(vec3 dval) {
 
 glm::vec3
 Vertex::Position() {
-    return dstval + (srcval-dstval) * vec3((float)framesleft/ (float)N_FRAMES_PER_SPLIT);
+    return dstval; // + (srcval-dstval) * vec3((float)framesleft/ (float)N_FRAMES_PER_SPLIT);
 }
 
 void
@@ -765,7 +778,8 @@ Vertex::UpdateQ() {
     foreach(Hedge* h, edges) {
         Face* face = h->f;
         vec3 norm = face->Normal();
-        vec3 dv = Position() * norm; // element-wise
+        vec3 pos = Position();
+        vec3 dv = pos * norm; // element-wise
         vec4 p(norm.x, norm.y, norm.z, 0.0f - dv.x - dv.y - dv.z); /* = [a b c d] */
 
 #if 0
@@ -799,7 +813,8 @@ Vertex::UpdateQ() {
         printf("dv is:\n");      glm_print(dv);
         printf("p is:\n");       glm_print(p);
         printf("op(p,p) is:\n"); glm_print(op);
-        printf("Q is:\n");       glm_print(Q);
+        printf("pp is:\n");       glm_print( outerProduct(p,p) );
+        printf("Q  is:\n");       glm_print(Q);
 #endif
     }
 }
@@ -826,33 +841,57 @@ Hedge::GetError() {
     vec4 v_bar = GetVBar();
     vec4 Qdotv = Q * v_bar;
     float val = dot(v_bar, Qdotv);
+
+#if 0
+    printf("\nQ is:\n");  glm_print(Q);
+    printf("p0    is: "); glm_print(v->dstval);
+    printf("v_bar is: "); glm_print(v_bar);
+    printf("p1    is: "); glm_print(oppv()->dstval);
+    printf("Qv is:\n");   glm_print(Qdotv);
+    printf("val is %f\n", val);
+#endif
+
     return val;
 }
 
 mat4
 Hedge::GetQ() {
-    return v->Q + oppv()->Q;
+    mat4 Q = v->Q + oppv()->Q;
+    //printf("v.Q    : "); glm_print(v->Q);
+    //printf("oppv.Q : "); glm_print(oppv()->Q);
+    //printf("sum .Q : "); glm_print(Q);
+    return Q;
 }
 
 vec4
 Hedge::GetVBar() {
     mat4 Q = GetQ();
-
     Q[0][3] = 0.0f;
     Q[1][3] = 0.0f;
     Q[2][3] = 0.0f;
     Q[3][3] = 1.0f;
 
-    vec4 ans;
-    if (g_qem and determinant(Q) != 0.0f) {
-        mat4 inv = inverse(Q);
-        ans = inv * vec4(0.f, 0.f, 0.f, 1.f);
-    } else {
-        vec3 mp = GetMidpoint();
-        ans = vec4(mp.x, mp.y, mp.z, 1.0f);
-    }
+    if (g_qem and determinant(Q) != 0.0f)
+        return glm::column(inverse(Q), 3);
+    else
+        return homogenize( GetMidpoint() );
 
-    return ans;
+#if 0
+    if (determinant(Q) == 0.f)
+        printf("\n\nnot invertible -- midpoint\n");
+    else
+        printf("\n\ninvertible -- qem\n");
+    printf("inverse("); glm_print(Q); printf(")."); glm_print(vec4(0,0,0,1));
+    printf("inverse: "); glm_print( inverse(Q) );
+
+    assert(ans.w == 1.0f); //ans = homogenize(ans);
+    printf("ans: "); glm_print(ans);
+    printf("v:   "); glm_print(oppv()->dstval);
+
+    vec4 v4(v->dstval.x, v->dstval.y, v->dstval.z, 1.0f);
+    float error0 = dot(v4, v->Q * v4);
+    assert(fabs(error0) < 10.f * FLT_EPSILON);
+#endif
 }
 
 vec3

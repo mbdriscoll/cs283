@@ -5,6 +5,7 @@
 #endif
 
 #include "glm/glm.hpp"
+#include "glm/gtc/matrix_access.hpp"
 
 #include <boost/foreach.hpp>
 #define foreach BOOST_FOREACH
