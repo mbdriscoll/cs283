@@ -75,8 +75,8 @@ Object::Object(FILE* input) {
 
     // Scan all vertices
     for(int i = 0; i < numverts; i++) {
-        float x, y, z;
-        scanned = fscanf(input, "%f %f %f\n", &x, &y, &z);
+        double x, y, z;
+        scanned = fscanf(input, "%lf %lf %lf\n", &x, &y, &z);
         assert(scanned == 3 && "Read vertex with a non-three number of coords.");
 
         Vertex *newv = new Vertex(vec3(x, y, z));
@@ -598,13 +598,13 @@ Object::Collapse(Hedge *e00, vec4 newloc) {
     if (e02->pair && e02->pair->IsDegenerate()) {
         printf("degen vA\n");
         vec3 &p = e02->pair->v->dstval;
-        vec4 newloc = vec4(p.x, p.y, p.z, 1.0f);
+        vec4 newloc = vec4(p.x, p.y, p.z, 1.0);
         state->degenA = this->Collapse(e02->pair, newloc);
     }
     if (e12 && e12->pair && e12->pair->IsDegenerate()) {
         printf("degen vB\n");
         vec3 &p = e12->pair->v->dstval;
-        vec4 newloc = vec4(p.x, p.y, p.z, 1.0f);
+        vec4 newloc = vec4(p.x, p.y, p.z, 1.0);
         state->degenB = this->Collapse(e12->pair, newloc);
     }
 
@@ -785,13 +785,13 @@ Vertex::MoveFrom(vec3 sval) {
 
 void
 Vertex::UpdateQ() {
-    Q = mat4(0.0f);
+    Q = mat4(0.0);
     foreach(Hedge* h, edges) {
         Face* face = h->f;
         vec3 norm = face->Normal();
         vec3 pos = dstval;
         vec3 dv = pos * norm; // element-wise
-        vec4 p(norm.x, norm.y, norm.z, 0.0f - dv.x - dv.y - dv.z); /* = [a b c d] */
+        vec4 p(norm.x, norm.y, norm.z, 0.0 - dv.x - dv.y - dv.z); /* = [a b c d] */
 
 #if 0
 #define TOLERANCE (2.0f*FLT_EPSILON)
@@ -834,8 +834,8 @@ bool
 QEMCompare::operator() (Hedge *x, Hedge* y) const {
     /* min-cost hedge should be on top, but heap is a max heap so this is
      * the opposite of what you'd expect */
-    float x_error = x->GetError(),
-          y_error = y->GetError();
+    double x_error = x->GetError(),
+           y_error = y->GetError();
 
     /* reject nans */
     if (g_qem) {
@@ -846,12 +846,12 @@ QEMCompare::operator() (Hedge *x, Hedge* y) const {
     return x_error > y_error;
 }
 
-float
+double
 Hedge::GetError() {
     mat4 Q = GetQ();
     vec4 v_bar = GetVBar();
     vec4 Qdotv = Q * v_bar;
-    float val = dot(v_bar, Qdotv);
+    double val = dot(v_bar, Qdotv);
 
 #if 0
     printf("\nQ is:\n");  glm_print(Q);
@@ -866,8 +866,13 @@ Hedge::GetError() {
 }
 
 mat4
+Vertex::GetQ() {
+    UpdateQ();
+    return Q;
+}
+mat4
 Hedge::GetQ() {
-    mat4 Q = v->Q + oppv()->Q;
+    mat4 Q = v->GetQ() + oppv()->GetQ();
     //printf("v.Q    : "); glm_print(v->Q);
     //printf("oppv.Q : "); glm_print(oppv()->Q);
     //printf("sum .Q : "); glm_print(Q);
@@ -877,12 +882,12 @@ Hedge::GetQ() {
 vec4
 Hedge::GetVBar() {
     mat4 Q = GetQ();
-    Q[0][3] = 0.0f;
-    Q[1][3] = 0.0f;
-    Q[2][3] = 0.0f;
-    Q[3][3] = 1.0f;
+    Q[0][3] = 0.0;
+    Q[1][3] = 0.0;
+    Q[2][3] = 0.0;
+    Q[3][3] = 1.0;
 
-    if (g_qem and determinant(Q) != 0.0f)
+    if (g_qem and determinant(Q) != 0.0)
         return glm::column(inverse(Q), 3);
     else
         return homogenize( GetMidpoint() );
@@ -907,7 +912,7 @@ Hedge::GetVBar() {
 
 vec3
 Hedge::GetMidpoint() {
-    return vec3(0.5f) * (v->dstval + oppv()->dstval);
+    return vec3(0.5) * (v->dstval + oppv()->dstval);
 }
 
 Hedge*

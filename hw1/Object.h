@@ -40,6 +40,7 @@ public:
     std::set<Vertex*> Vertices();
     glm::mat4 Q;
     void UpdateQ();
+    glm::mat4 GetQ();
     void PullHedge(Hedge *newIncidentEdge, Vertex *oldpoint=NULL);
 };
 
@@ -69,7 +70,7 @@ public:
     void SetPair(Hedge* o);
     bool Render();
     bool IsDegenerate();
-    float GetError();
+    double GetError();
     glm::vec4 GetVBar();
     glm::mat4 GetQ();
     glm::vec3 GetMidpoint();
