@@ -356,6 +356,9 @@ Object::DrawNormals(int vNorms, int fNorms) {
     }
     glEnd();
 
+    if (queue.size() == 0)
+        return;
+
     // Draw a quad by the next edge to collapse
     Hedge* h = PeekNext();
     Vertex *v0 = h->v,
@@ -377,13 +380,11 @@ Object::DrawNormals(int vNorms, int fNorms) {
     vec4 p4 = h->GetVBar();
     vec3 p = vec3(p4.x, p4.y, p4.z);
     vec3 end = h->v->dstval;
-    if (p == h->GetMidpoint())
-        glColor3f(1.0f, 0.0f, 1.0f); // magenta
-    else
-        glColor3f(1.0f, 1.0f, 0.0f); // yellow
+
+    glColor3f(1.0f, 0.0f, 1.0f); // magenta
     glPointSize(10.0f);
     glBegin(GL_POINTS);
-#if 0
+
     glVertex3f(p.x, p.y, p.z);
 
     glColor3f(1.0f, 1.0f, 0.2f); // midoint is green
@@ -398,7 +399,6 @@ Object::DrawNormals(int vNorms, int fNorms) {
     glColor3f(0.0f, 1.0f, 0.0f); // vB is green
     if (h->pair)
         glVertex3fv(&(h->pair->next->next->v->dstval.x));
-#endif
 
     glEnd();
 }
@@ -451,8 +451,8 @@ Object::CollapseNext() {
     //printf("vbar:\n"); glm_print(e0->GetVBar());
     //printf("Q:   \n"); glm_print(e0->GetQ());
 
-    //if (g_qem)
-        //printf("Collapsing edge with error: %g\n", e0->GetError());
+    if (g_qem)
+       printf("Collapsing edge with error: %g\n", e0->GetError());
 
     return this->Collapse(e0, e0->GetVBar());
 }
@@ -577,7 +577,6 @@ Object::Collapse(Hedge *e00, vec4 newloc) {
         state->degenB = this->Collapse(e12->pair, newloc);
     }
 
-#if 0
     /* update quadrics */
     foreach(Vertex* neighbor, midpoint->Vertices())
       neighbor->UpdateQ();
@@ -588,7 +587,6 @@ Object::Collapse(Hedge *e00, vec4 newloc) {
         queue.update(h->next->handle, h->next);
         queue.update(h->next->next->handle, h->next->next);
     }
-#endif
 
     DEBUG_ASSERT( this->check() );
 
@@ -814,7 +812,7 @@ QEMCompare::operator() (Hedge *x, Hedge* y) const {
           y_error = y->GetError();
 
     /* reject nans */
-    if (false && g_qem) {
+    if (g_qem) {
         assert(x_error == x_error);
         assert(y_error == y_error);
     }
@@ -824,9 +822,11 @@ QEMCompare::operator() (Hedge *x, Hedge* y) const {
 
 float
 Hedge::GetError() {
-    //mat4 Q = GetQ();
-    //vec4 v_bar = GetVBar();
-    return 1.0f; //dot(v_bar, Q * v_bar);
+    mat4 Q = GetQ();
+    vec4 v_bar = GetVBar();
+    vec4 Qdotv = Q * v_bar;
+    float val = dot(v_bar, Qdotv);
+    return val;
 }
 
 mat4
@@ -843,16 +843,16 @@ Hedge::GetVBar() {
     Q[2][3] = 0.0f;
     Q[3][3] = 1.0f;
 
-    if (false) {//g_qem and determinant(Q) != 0.0f) {
-        vec4 ans = inverse(Q) * vec4(0.f, 0.f, 0.f, 1.f);
-        assert(ans.x == ans.x);
-        assert(ans.y == ans.y);
-        assert(ans.z == ans.z);
-        return ans;
+    vec4 ans;
+    if (g_qem and determinant(Q) != 0.0f) {
+        mat4 inv = inverse(Q);
+        ans = inv * vec4(0.f, 0.f, 0.f, 1.f);
     } else {
         vec3 mp = GetMidpoint();
-        return vec4(mp.x, mp.y, mp.z, 1.0f);
+        ans = vec4(mp.x, mp.y, mp.z, 1.0f);
     }
+
+    return ans;
 }
 
 vec3
