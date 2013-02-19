@@ -37,7 +37,7 @@ float g_rotate[2] = {0, 0},
 int   g_width = 1024,
       g_height = 1024;
 
-int   g_qem = 1;
+int   g_qem = 0;
 
 GLhud g_hud;
 
@@ -136,6 +136,7 @@ display() {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof (GLfloat) * 6, 0);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof (GLfloat) * 6, (float*)12);
 
+    g_model->DrawPoints();
     g_model->DrawNormals(g_drawVertexNormals, g_drawFaceNormals);
 
     glEnable(GL_LIGHTING);
@@ -314,7 +315,7 @@ initHUD()
     g_hud.AddRadioButton(1, "Wire (w)",    g_wire == 0, 10, 60, callbackWireframe, 0, 'w');
     g_hud.AddRadioButton(1, "Shaded",      g_wire == 1, 10, 80, callbackWireframe, 1, 'w');
 
-    g_hud.AddCheckBox("Quadrics (m)", true, 10, 110, callbackQEM, 0, 'm');
+    g_hud.AddCheckBox("Quadrics (m)", false, 10, 110, callbackQEM, 0, 'm');
     g_hud.AddCheckBox("Animate (a)", 0, 10, 130, callbackAnimate, 0, 'a');
 }
 

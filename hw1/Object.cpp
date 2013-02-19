@@ -331,6 +331,17 @@ Vertex::valence() {
 }
 
 void
+Object::DrawPoints() {
+    glPointSize(5.0f);
+    glColor3f(1.0f, 1.0f, 1.0f); // yellow
+
+    glBegin(GL_POINTS);
+    foreach(Vertex* v, vertices)
+        glVertex3fv(&v->dstval.x);
+    glEnd();
+}
+
+void
 Object::DrawNormals(int vNorms, int fNorms) {
     glBegin(GL_LINES);
     if (vNorms) {
@@ -372,6 +383,7 @@ Object::DrawNormals(int vNorms, int fNorms) {
         glColor3f(1.0f, 1.0f, 0.0f); // yellow
     glPointSize(10.0f);
     glBegin(GL_POINTS);
+#if 0
     glVertex3f(p.x, p.y, p.z);
 
     glColor3f(1.0f, 1.0f, 0.2f); // midoint is green
@@ -386,13 +398,14 @@ Object::DrawNormals(int vNorms, int fNorms) {
     glColor3f(0.0f, 1.0f, 0.0f); // vB is green
     if (h->pair)
         glVertex3fv(&(h->pair->next->next->v->dstval.x));
+#endif
 
     glEnd();
 }
 
 void
 Vertex::DrawNormal() {
-    vec3 norm = vec3(0.5f) * normalize( Normal() );
+    vec3 norm = vec3(0.5f) * Normal();
     vec3 pos = Position();
     vec3 end = pos + norm;
 
@@ -404,7 +417,7 @@ void
 Face::DrawNormal() {
     vec3 centroid = vec3(1.0/3.0) *
         (edge->v->Position()+ edge->next->v->Position()+ edge->next->next->v->Position());
-    vec3 normal = vec3(0.5f) * normalize( Normal() );
+    vec3 normal = vec3(0.5f) * Normal();
     vec3 end = centroid + normal;
 
     glVertex3fv( (GLfloat*) &centroid );
@@ -416,6 +429,7 @@ Vertex::Normal() {
     vec3 normal = edge()->f->Normal();;
     Hedge *e;
 
+    assert(edges.size() > 0);
     foreach(Hedge *neighbor, edges)
         normal += neighbor->f->Normal();
 

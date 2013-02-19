@@ -83,6 +83,7 @@ public:
     Object(FILE* inputfile);
     bool Render();
     void DrawNormals(int vNorms, int fNorms);
+    void DrawPoints();
     void SetCenterSize(float *center, float *size);
     VertexSplit* CollapseNext();
     VertexSplit* Collapse(Hedge* e, glm::vec4 newloc);
