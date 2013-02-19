@@ -198,7 +198,7 @@ int Object::check() {
         assert( faces.find(h->f) != faces.end() );
         assert( hedges.find(h->next) != hedges.end() );
         if ( vertices.find(h->v) == vertices.end() ) {
-            printf("missing vertex %x\n", h->v);
+            printf("missing vertex %lx\n", (long int) h->v);
             assert( vertices.find(h->v) != vertices.end() );
         }
         if (h->pair)
