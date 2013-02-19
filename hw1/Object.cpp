@@ -440,11 +440,11 @@ Object::CollapseNext() {
     //if (g_qem)
         //printf("Collapsing edge with error: %g\n", e0->GetError());
 
-    return this->Collapse(e0);
+    return this->Collapse(e0, e0->GetVBar());
 }
 
 VertexSplit*
-Object::Collapse(Hedge *e00) {
+Object::Collapse(Hedge *e00, vec4 newloc) {
     // -------------------------------------------------------
     // save state
 
@@ -465,8 +465,6 @@ Object::Collapse(Hedge *e00) {
     bool delete_mp = false,
          delete_va = false,
          delete_vb = false;
-
-    vec4 newloc = e00->GetVBar();
 
     VertexSplit *state = new VertexSplit(e00);
 
@@ -552,15 +550,17 @@ Object::Collapse(Hedge *e00) {
     //printf("PRECHECK: "); DEBUG_ASSERT( this->check() );
 
     /* collapse fins */
-    if (e01->pair && e01->pair->IsDegenerate()) {
+    if (e02->pair && e02->pair->IsDegenerate()) {
         printf("degen vA\n");
-        assert(e01->pair && e02->pair);
-        state->degenA = this->Collapse(e01->pair);
+        vec3 &p = e02->pair->v->dstval;
+        vec4 newloc = vec4(p.x, p.y, p.z, 1.0f);
+        state->degenA = this->Collapse(e02->pair, newloc);
     }
-    if (e11 && e11->pair && e11->pair->IsDegenerate()) {
+    if (e12 && e12->pair && e12->pair->IsDegenerate()) {
         printf("degen vB\n");
-        assert(e11->pair && e12->pair);
-        state->degenB = this->Collapse(e11->pair);
+        vec3 &p = e12->pair->v->dstval;
+        vec4 newloc = vec4(p.x, p.y, p.z, 1.0f);
+        state->degenB = this->Collapse(e12->pair, newloc);
     }
 
 #if 0

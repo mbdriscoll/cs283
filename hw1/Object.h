@@ -85,7 +85,7 @@ public:
     void DrawNormals(int vNorms, int fNorms);
     void SetCenterSize(float *center, float *size);
     VertexSplit* CollapseNext();
-    VertexSplit* Collapse(Hedge* e);
+    VertexSplit* Collapse(Hedge* e, glm::vec4 newloc);
     Hedge* PeekNext();
 
     void Pop(bool many = false);
