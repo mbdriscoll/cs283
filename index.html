@@ -47,6 +47,26 @@
       <h4>II. Mesh Data Structure</h4>
       <p>
         My mesh viewer
+        <div class="span3"><pre>
+class Vertex {
+    glm::mat4 Q;
+    glm::vec3 location;
+    std::set&lt;Hedge*&gt; edges;
+};
+        </pre></div>
+        <div class="span3"><pre>
+class Face {
+    Hedge* edge;
+};
+        </pre></div>
+        <div class="span3"><pre>
+class Hedge {
+    Face* f;
+    Hedge* next;
+    Hedge* pair;
+    Vertex* v;
+};
+        </pre></div>
       </p>
 
       <h4>III. Edge Decimation Method</h4>
@@ -56,9 +76,9 @@
 
       <h4>IV. QEM and Progressive Meshes</h4>
       <p>
-        <iframe width="960" height="720" src="http://www.youtube.com/embed/6iHGN2myD7E?rel=0" frameborder="0" allowfullscreen></iframe>
-        <iframe width="960" height="720" src="http://www.youtube.com/embed/ui8zilytDls?rel=0" frameborder="0" allowfullscreen></iframe>
-        <iframe width="960" height="720" src="http://www.youtube.com/embed/87cBm86LKOk?rel=0" frameborder="0" allowfullscreen></iframe>
+        <iframe width="900" height="675" src="http://www.youtube.com/embed/6iHGN2myD7E?rel=0" frameborder="0" allowfullscreen></iframe>
+        <iframe width="900" height="675" src="http://www.youtube.com/embed/ui8zilytDls?rel=0" frameborder="0" allowfullscreen></iframe>
+        <iframe width="900" height="675" src="http://www.youtube.com/embed/87cBm86LKOk?rel=0" frameborder="0" allowfullscreen></iframe>
       </p>
 
 
