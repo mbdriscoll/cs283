@@ -283,6 +283,14 @@ Face::Face() : edge(NULL)
 
 vec3
 Face::Normal() {
+    vec3 v0 = this->edge->v->dstval;
+    vec3 v1 = this->edge->next->v->dstval;
+    vec3 v2 = this->edge->next->next->v->dstval;
+    return normalize( cross(v1-v0, v2-v1) );
+}
+
+vec3
+Face::CurrentNormal() {
     vec3 v0 = this->edge->v->Position();
     vec3 v1 = this->edge->next->v->Position();
     vec3 v2 = this->edge->next->next->v->Position();
@@ -300,9 +308,8 @@ Face::Render() {
 
 bool
 Vertex::Render() {
-
     vec3 pos = this->Position(),
-         norm = this->Normal();
+         norm = this->CurrentNormal();
     glNormal3fv( (GLfloat*) &norm  );
     glVertex3fv( (GLfloat*) &pos );
 
@@ -376,7 +383,7 @@ Object::DrawNormals(int vNorms, int fNorms) {
     Hedge* h = PeekNext();
     Vertex *v0 = h->v,
            *v1 = h->oppv();
-    vec3 enorm = vec3(0.01f) * normalize(v0->Normal() + v1->Normal());
+    vec3 enorm = vec3(0.01f) * normalize(v0->CurrentNormal() + v1->CurrentNormal());
     vec3  ur = v0->Position() + enorm,
           ul = v1->Position() + enorm,
           lr = v0->Position() - enorm,
@@ -417,7 +424,7 @@ Object::DrawNormals(int vNorms, int fNorms) {
 
 void
 Vertex::DrawNormal() {
-    vec3 norm = vec3(0.5f) * Normal();
+    vec3 norm = vec3(0.5f) * CurrentNormal();
     vec3 pos = Position();
     vec3 end = pos + norm;
 
@@ -429,7 +436,7 @@ void
 Face::DrawNormal() {
     vec3 centroid = vec3(1.0/3.0) *
         (edge->v->Position()+ edge->next->v->Position()+ edge->next->next->v->Position());
-    vec3 normal = vec3(0.5f) * Normal();
+    vec3 normal = vec3(0.5f) * CurrentNormal();
     vec3 end = centroid + normal;
 
     glVertex3fv( (GLfloat*) &centroid );
@@ -438,12 +445,24 @@ Face::DrawNormal() {
 
 glm::vec3
 Vertex::Normal() {
-    vec3 normal = edge()->f->Normal();;
+    vec3 normal(0.0f);
     Hedge *e;
 
     assert(edges.size() > 0);
     foreach(Hedge *neighbor, edges)
         normal += neighbor->f->Normal();
+
+    return normalize( normal );
+}
+
+glm::vec3
+Vertex::CurrentNormal() {
+    vec3 normal(0.0f);
+    Hedge *e;
+
+    assert(edges.size() > 0);
+    foreach(Hedge *neighbor, edges)
+        normal += neighbor->f->CurrentNormal();
 
     return normalize( normal );
 }
@@ -747,28 +766,20 @@ Vertex::MoveTo(vec4 p) {
 
 void
 Vertex::MoveTo(vec3 dval) {
-#if ANIMATE
     srcval = Position();
     dstval = dval;
     framesleft = N_FRAMES_PER_SPLIT;
-#else
-    dstval = srcval = dval;
-#endif
 }
 
 glm::vec3
 Vertex::Position() {
-    return dstval; // + (srcval-dstval) * vec3((float)framesleft/ (float)N_FRAMES_PER_SPLIT);
+    return dstval + (srcval-dstval) * vec3((float)framesleft/ (float)N_FRAMES_PER_SPLIT);
 }
 
 void
 Vertex::MoveFrom(vec3 sval) {
-#if ANIMATE
     srcval = sval;
     framesleft = N_FRAMES_PER_SPLIT;
-#else
-    srcval = dstval;
-#endif
 }
 
 
@@ -778,7 +789,7 @@ Vertex::UpdateQ() {
     foreach(Hedge* h, edges) {
         Face* face = h->f;
         vec3 norm = face->Normal();
-        vec3 pos = Position();
+        vec3 pos = dstval;
         vec3 dv = pos * norm; // element-wise
         vec4 p(norm.x, norm.y, norm.z, 0.0f - dv.x - dv.y - dv.z); /* = [a b c d] */
 

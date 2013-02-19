@@ -10,4 +10,4 @@
 #include <boost/foreach.hpp>
 #define foreach BOOST_FOREACH
 
-#define N_FRAMES_PER_SPLIT 100
+#define N_FRAMES_PER_SPLIT 1000

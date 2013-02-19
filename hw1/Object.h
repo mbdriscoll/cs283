@@ -31,6 +31,7 @@ public:
 
     bool Render();
     glm::vec3 Normal();
+    glm::vec3 CurrentNormal();
     glm::vec3 Position();
     void DrawNormal();
     void MoveTo(glm::vec3 dstval);
@@ -50,6 +51,7 @@ public:
     bool Render();
     void DrawNormal();
     glm::vec3 Normal();
+    glm::vec3 CurrentNormal();
 };
 
 class Hedge {
