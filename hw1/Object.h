@@ -64,7 +64,7 @@ public:
     Hedge* prev();
     Vertex* oppv();
 
-    void set_pair(Hedge* o);
+    void SetPair(Hedge* o);
     bool Render();
     bool IsDegenerate();
     float GetError();

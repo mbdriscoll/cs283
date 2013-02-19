@@ -136,8 +136,7 @@ display() {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof (GLfloat) * 6, 0);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof (GLfloat) * 6, (float*)12);
 
-    if (g_drawVertexNormals || g_drawFaceNormals)
-        g_model->DrawNormals(g_drawVertexNormals, g_drawFaceNormals);
+    g_model->DrawNormals(g_drawVertexNormals, g_drawFaceNormals);
 
     glEnable(GL_LIGHTING);
     glShadeModel(GL_SMOOTH);
@@ -355,10 +354,13 @@ idle() {
 
     /* 0: do nothing.   1: do splits   -1: do pops  */
     if (doneAnimating && g_animate) {
-        if (g_model->vsplits.size() == 0)
+        if (g_model->vsplits.size() == 0) {
+            printf("Doing edge pops\n");
             g_animateDirection = 0;
-        else if (g_model->faces.size() <= 2)
+        } else if (g_model->faces.size() <= 2) {
+            printf("Doing vertex splits.\n");
             g_animateDirection = 1;
+        }
 
         if (g_animateDirection)
             g_model->Split();
