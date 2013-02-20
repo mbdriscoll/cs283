@@ -25,11 +25,15 @@
 
     <style>
     p {
-        margin-bottom: 1cm;
+        margin-bottom: 16px;
     }
     a.thumbnail {
         border-width: 0px;
         box-shadow: none;
+    }
+    h4 {
+        margin-top: 32px;
+        margin-bottom: 16px;
     }
     </style>
   </head>
@@ -107,16 +111,22 @@ class Face {
 
       <h4>III. Edge Decimation Method</h4>
       <p>
-        My edge-collapse method works as follows: a half-edge is identified as the edge to remove. Before mutating the mesh, I capture the original state in a <tt>VertexSplit</tt> object, which is pushed onto a stack of <tt>VertexSplits</tt>. Then, I designed the half-edge's vertex as the one to keep in the mesh; the other is marked for removal after its incident half-edges are tranferred to the remaining vertex. Then, I fix up pairs between the other two half-edges' pairs in the face. I also make sure that collapsed edges not longer appear in the set of indicident edges maintained at each vertex. Next, if the target half-edge has a pair, then I repeat the process for the other face. Finally, I update the <tt>Q</tt> matrices for all vertices in the 1-neighborhood of the target vertex, and I recursively check and eliminate fins created by the newly-connected faces. All of these operations are local and occur in constant time, so my edge-collapse method is independent of model size.
+        My edge-collapse method works as follows: a half-edge is identified as the edge to remove. Before mutating the mesh, I capture the original state in a <tt>VertexSplit</tt> object, which is pushed onto a stack of <tt>VertexSplits</tt>. Then, I designed the half-edge's vertex as the one to keep in the mesh; the other is marked for removal after its incident half-edges are tranferred to the remaining vertex. I fix up pairs between the other two half-edges' pairs in the face. I also make sure that collapsed edges not longer appear in the set of indicident edges maintained at each vertex. Next, if the target half-edge has a pair, then I repeat the process for the other face. Finally, I update the <tt>Q</tt> matrices for all vertices in the 1-neighborhood of the target vertex, and I recursively check and eliminate fins created by the newly-connected faces. All of these operations are local and occur in constant time, so my edge-collapse method is independent of model size.
       </p>
       <p>
          This video shows a collapse that creates a fin, which is automatically removed. Smooth interpolation was only implemented for vertex splits, hence the choppiness during edge collapses.
-         <iframe width="900" height="675" src="http://www.youtube.com/embed/q3aNUESGI7I?rel=0" frameborder="0" allowfullscreen></iframe>
       </p>
+      <iframe width="960" height="720" src="http://www.youtube.com/embed/qCuGN3rgkVA?rel=0" frameborder="0" allowfullscreen></iframe>
 
       <h4>IV. QEM and Progressive Meshes</h4>
       <p>
-        My implementation of QEM follows directly from that described by Garland and Heckbert. I use a <a href="http://www.boost.org/doc/libs/1_53_0/doc/html/boost/heap/binomial_heap.html">binomial heap</a> from the Boost C++ Library to maintain a sorted list of edges to collapse. The heap provides an <tt>update</tt> method to resort individual vertices when their quadric error changes. Like any good heap implementation, access to the top element takes constant time and insertions and updates take <tt>log(n)</tt> time.
+        My implementation of QEM follows directly from that described by Garland and Heckbert, with a few differences. I only implement edge collapses, not general pair collapses. Similarly, I place new vertices at edge midpoints if the <tt>Q</tt> matrix is not invertible, instead of finding the optimal location along the edge and/or choosing between the midpoint and endpoints.
+      </p>
+      <p>
+        I use a <a href="http://www.boost.org/doc/libs/1_53_0/doc/html/boost/heap/binomial_heap.html">binomial heap</a> from the Boost C++ Library to maintain a sorted list of edges to collapse. The heap provides an <tt>update</tt> method to resort individual vertices when their quadric error changes. Like any good heap implementation, access to the top element takes constant time and insertions and updates take <tt>log(n)</tt> time.
+      </p>
+      <p>
+        Like Hoppe, I use a linear interpolation to create a smooth transitions during vertex splits. This could be extended to edge collapses too, but I haven't implemented it. The linear scheme does have its drawbacks--when vertices first move from their starting location, a new face suddenly appears and instantly changes the surrounding vertex normals (and hence their shading). If it hasn't been tried before, an interesting project might be to designed a transition scheme that results in smooth normal adjustments.
       </p>
       <p>
         <iframe width="900" height="675" src="http://www.youtube.com/embed/6iHGN2myD7E?rel=0" frameborder="0" allowfullscreen></iframe>
@@ -178,7 +188,7 @@ class Face {
 
       <h4>VII. Source Code</h4>
       <p>
-        My code is available for download at <a href="https://github.com/mbdriscoll/cs283">github.com/mbdriscoll/cs283</a>. It was developed using Boost 1.53.0, Mac OS 10.8.2, and Clang 4.1.
+        My code is available for download at <a href="https://github.com/mbdriscoll/cs283">github.com/mbdriscoll/cs283</a>. It was developed using Boost 1.52.0, GLM 0.9.3, Mac OS 10.8.2, and Clang 4.1.
       </p>
 
   </body>
