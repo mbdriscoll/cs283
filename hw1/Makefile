@@ -7,7 +7,7 @@ OBJECTS = \
 		  extra/gl_hud.o \
 		  viewer.o
 
-CXXFLAGS = -I/opt/local/include
+CXXFLAGS = -I/opt/local/include -O2
 LDFLAGS = -framework GLUT -framework OpenGL -L/opt/local/lib -lGLEW
 default: viewer
 

@@ -41,33 +41,6 @@ int   g_qem = 1;
 
 GLhud g_hud;
 
-#if 0
-GLuint g_transformUB = 0,
-       g_transformBinding = 0,
-       g_tessellationUB = 0,
-       g_tessellationBinding = 0,
-       g_lightingUB = 0,
-       g_lightingBinding = 0;
-GLuint g_primQuery = 0;
-#endif
-
-std::vector<int> g_coarseEdges;
-std::vector<float> g_coarseEdgeSharpness;
-std::vector<float> g_coarseVertexSharpness;
-
-static void
-checkGLErrors(std::string const & where = "")
-{
-    GLuint err;
-    while ((err = glGetError()) != GL_NO_ERROR) {
-        /*
-        std::cerr << "GL error: "
-                  << (where.empty() ? "" : where + " ")
-                  << err << "\n";
-        */
-    }
-}
-
 //------------------------------------------------------------------------------
 static void
 fitFrame() {
@@ -154,9 +127,7 @@ display() {
     glPolygonMode(GL_FRONT_AND_BACK, (g_wire == 0) ? GL_LINE : GL_FILL);
     g_model->Render();
 
-    //glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    //glDisableClientState(GL_VERTEX_ARRAY);
     glFinish();
 
     if (g_hud.IsVisible()) {
@@ -170,8 +141,6 @@ display() {
     glFinish();
     glutSwapBuffers();
     glFinish();
-
-    checkGLErrors("display leave");
 }
 
 //------------------------------------------------------------------------------
@@ -213,7 +182,6 @@ mouse(int button, int state, int x, int y) {
 //------------------------------------------------------------------------------
 static void
 quit() {
-    //glDeleteQueries(1, &g_primQuery);
     exit(0);
 }
 
@@ -357,13 +325,10 @@ idle() {
 
     /* 0: do nothing.   1: do splits   -1: do pops  */
     if (doneAnimating && g_animate) {
-        if (g_model->vsplits.size() == 0) {
-            printf("Doing edge pops\n");
+        if (g_model->vsplits.size() == 0)
             g_animateDirection = 0;
-        } else if (g_model->queue.size() <= 16) {
-            printf("Doing vertex splits.\n");
+        else if (g_model->queue.size() <= 16)
             g_animateDirection = 1;
-        }
 
         if (g_animateDirection)
             g_model->Split();
@@ -397,11 +362,6 @@ int main(int argc, char ** argv)
     initializeShape(input_filename);
 
     initGL();
-
-#ifdef WIN32
-    wglSwapIntervalEXT(0);
-#endif
-
     initHUD();
 
     glutIdleFunc(idle);
@@ -409,5 +369,3 @@ int main(int argc, char ** argv)
 
     quit();
 }
-
-//------------------------------------------------------------------------------

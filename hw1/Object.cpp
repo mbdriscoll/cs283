@@ -62,7 +62,6 @@ Object::Object(FILE* input) {
     int numverts, numfaces, numthree;
     scanned = fscanf(input, "%d %d %d\n", &numverts, &numfaces, &numthree);
     assert(scanned == 3 && "Could not read number of verts or faces from OFF file.");
-    //printf("Model has %d verts, %d faces, %d numthree.\n", numverts, numfaces, numthree);
 
     faces = std::set<Face*>();
     hedges = std::set<Hedge*>();
@@ -113,7 +112,7 @@ Object::Object(FILE* input) {
     foreach (Hedge* h, this->hedges)
         h->pair = vtoe[VVpair(h->oppv(),h->v)];
 
-    this->check();
+    DEBUG_ASSERT( this->check() );
 
     // Compute Q values
     foreach(Vertex* v, vertices)
@@ -204,9 +203,6 @@ int Object::check() {
             assert(h->v == h->pair->next->v);
         }
 
-        /* no degen edges */
-        //assert(not h->IsDegenerate());
-
         /* membership checks */
         assert( faces.find(h->f) != faces.end() );
         assert( hedges.find(h->next) != hedges.end() );
@@ -229,32 +225,6 @@ int Object::check() {
         /* membership check */
         foreach(Hedge* e, v->edges)
             assert( hedges.find(e) != hedges.end() );
-
-        /* valence check -- expensive */ /*
-        int expected_valence = v->Hedges().size();
-        int actual_valence = 0;
-        foreach(Hedge* h, hedges)
-            if (h->v == v)
-                actual_valence += 1;
-        assert(actual_valence == expected_valence);
-        */
-
-        /* hedges make rings around vertices */ /*
-        int nring_max = 100;
-        int nring_hedges = 0;
-        for(Hedge *starte = v->edge->next->pair;
-                nring_hedges < nring_max && starte != NULL && starte != v->edge;
-                starte=starte->next->pair)
-            nring_hedges += 1;
-        assert(nring_hedges < nring_max);
-
-        nring_hedges = 0;
-        for(Hedge *starte = v->edge->pair;
-                starte != NULL && starte->prev() != v->edge;
-                starte=starte->prev()->pair)
-            nring_hedges += 1;
-        assert(nring_hedges < nring_max);
-        */
     }
 
     foreach(Face *f, faces) {
@@ -375,53 +345,6 @@ Object::DrawNormals(int vNorms, int fNorms) {
             f->DrawNormal();
     }
     glEnd();
-
-    if (queue.size() == 0)
-        return;
-
-#if 0
-    // Draw a quad by the next edge to collapse
-    Hedge* h = PeekNext();
-    Vertex *v0 = h->v,
-           *v1 = h->oppv();
-    vec3 enorm = vec3(0.01f) * normalize(v0->CurrentNormal() + v1->CurrentNormal());
-    vec3  ur = v0->Position() + enorm,
-          ul = v1->Position() + enorm,
-          lr = v0->Position() - enorm,
-          ll = v1->Position() - enorm;
-    glColor3f(0.0f, 1.0f, 0.0f);
-    glBegin(GL_QUADS);
-    glVertex3fv( (GLfloat*) &ur );
-    glVertex3fv( (GLfloat*) &ul );
-    glVertex3fv( (GLfloat*) &ll );
-    glVertex3fv( (GLfloat*) &lr );
-    glEnd();
-
-    /* draw a point at the next vbar */
-    vec3 p = dehomogenize( h->GetVBar() );
-    vec3 end = h->v->dstval;
-
-    glPointSize(10.0f);
-    glBegin(GL_POINTS);
-
-    glColor3f(1.0f, 0.0f, 1.0f); // magenta
-    glVertex3fv(&p.x);
-
-    glColor3f(1.0f, 1.0f, 0.2f); // midoint is green
-    glVertex3fv(&(h->v->dstval.x));
-
-    //glColor3f(0.7f, 0.7f, 0.7f); // oldpoint is gray
-    //glVertex3fv(&(h->oppv()->dstval.x));
-
-    glColor3f(1.0f, 0.0f, 0.0f); // vA is red
-    glVertex3fv(&(h->next->next->v->dstval.x));
-
-    glColor3f(0.0f, 1.0f, 0.0f); // vB is green
-    if (h->pair)
-        glVertex3fv(&(h->pair->next->next->v->dstval.x));
-
-    glEnd();
-#endif
 }
 
 void
@@ -480,13 +403,6 @@ Object::PeekNext() {
 VertexSplit*
 Object::CollapseNext() {
     Hedge *e0 = PeekNext();
-
-    //printf("vbar:\n"); glm_print(e0->GetVBar());
-    //printf("Q:   \n"); glm_print(e0->GetQ());
-
-    //if (g_qem)
-       //printf("Collapsing edge with error: %g\n", e0->GetError());
-
     return this->Collapse(e0, e0->GetVBar());
 }
 
@@ -593,9 +509,6 @@ Object::Collapse(Hedge *e00, vec4 newloc) {
     if (delete_va) vertices.erase(vA);
     if (delete_vb) vertices.erase(vB);
 
-    //printf("del: mp %d  op %d  va %d  vb %d\n", delete_mp, 1, delete_va, delete_vb);
-    //printf("PRECHECK: "); DEBUG_ASSERT( this->check() );
-
     /* collapse fins */
     if (e02->pair && e02->pair->IsDegenerate()) {
         printf("degen vA\n");
@@ -680,8 +593,6 @@ VertexSplit::Apply(Object* o) {
     o->faces.insert(f0);
     if (f1) o->faces.insert(f1);
 
-    //printf("old: %x  new: %x  va: %x  vb: %x\n", target, newpoint, vA, vB);
-    //DEBUG_ASSERT(o->vertices.find(target) != o->vertices.end());
     o->vertices.insert(target);
     o->vertices.insert(newpoint);
     if (vA) o->vertices.insert(vA);
@@ -689,8 +600,6 @@ VertexSplit::Apply(Object* o) {
 
     /* make new vertices enter smoothly */
     newpoint->MoveFrom(target->Position());
-    //if (vA) vA->MoveFrom(target->Position());
-    //if (vB) vB->MoveFrom(target->Position());
 
     DEBUG_ASSERT( o->check() );
 }
@@ -794,41 +703,7 @@ Vertex::UpdateQ() {
         vec3 pos = dstval;
         vec3 dv = pos * norm; // element-wise
         vec4 p(norm.x, norm.y, norm.z, 0.0 - dv.x - dv.y - dv.z); /* = [a b c d] */
-
-#if 0
-#define TOLERANCE (2.0f*FLT_EPSILON)
-        assert(h->v == this);
-        //printf("using p:"); glm_print(p);
-        vec3 o0 = h->v->Position();
-        vec3 o1 = h->next->v->Position();
-        vec3 o2 = h->next->next->v->Position();
-        float delta0 = 0.0f - (p.x*o0.x + p.y*o0.y + p.z*o0.z + p.w);
-        float delta1 = 0.0f - (p.x*o1.x + p.y*o1.y + p.z*o1.z + p.w);
-        float delta2 = 0.0f - (p.x*o2.x + p.y*o2.y + p.z*o2.z + p.w);
-        if (fabs(delta0) > TOLERANCE) {
-            printf("bad delta0: %1.9f > %1.9f\n", delta0, TOLERANCE);
-            assert(fabs(delta0) < TOLERANCE);
-        }
-        if (fabs(delta1) > TOLERANCE) {
-            printf("bad delta1: %1.9f > %1.9f\n", delta1, TOLERANCE);
-            assert(fabs(delta1) < TOLERANCE);
-        }
-        if (fabs(delta2) > TOLERANCE) {
-            printf("bad delta2: %1.9f > %1.9f\n", delta2, TOLERANCE);
-            assert(fabs(delta2) < TOLERANCE);
-        }
-#endif
-
         Q += outerProduct(p, p);
-
-#if 0
-        printf("norm is:\n");    glm_print(norm);
-        printf("dv is:\n");      glm_print(dv);
-        printf("p is:\n");       glm_print(p);
-        printf("op(p,p) is:\n"); glm_print(op);
-        printf("pp is:\n");       glm_print( outerProduct(p,p) );
-        printf("Q  is:\n");       glm_print(Q);
-#endif
     }
 }
 
@@ -853,32 +728,17 @@ Hedge::GetError() {
     mat4 Q = GetQ();
     vec4 v_bar = GetVBar();
     vec4 Qdotv = Q * v_bar;
-    double val = dot(v_bar, Qdotv);
-
-#if 0
-    printf("\nQ is:\n");  glm_print(Q);
-    printf("p0    is: "); glm_print(v->dstval);
-    printf("v_bar is: "); glm_print(v_bar);
-    printf("p1    is: "); glm_print(oppv()->dstval);
-    printf("Qv is:\n");   glm_print(Qdotv);
-    printf("val is %f\n", val);
-#endif
-
-    return val;
+    return dot(v_bar, Qdotv);
 }
 
 mat4
 Vertex::GetQ() {
-    UpdateQ();
+    UpdateQ(); // XXX could cache it
     return Q;
 }
 mat4
 Hedge::GetQ() {
-    mat4 Q = v->GetQ() + oppv()->GetQ();
-    //printf("v.Q    : "); glm_print(v->Q);
-    //printf("oppv.Q : "); glm_print(oppv()->Q);
-    //printf("sum .Q : "); glm_print(Q);
-    return Q;
+    return v->GetQ() + oppv()->GetQ();
 }
 
 vec4
@@ -893,23 +753,6 @@ Hedge::GetVBar() {
         return glm::column(inverse(Q), 3);
     else
         return homogenize( GetMidpoint() );
-
-#if 0
-    if (determinant(Q) == 0.f)
-        printf("\n\nnot invertible -- midpoint\n");
-    else
-        printf("\n\ninvertible -- qem\n");
-    printf("inverse("); glm_print(Q); printf(")."); glm_print(vec4(0,0,0,1));
-    printf("inverse: "); glm_print( inverse(Q) );
-
-    assert(ans.w == 1.0f); //ans = homogenize(ans);
-    printf("ans: "); glm_print(ans);
-    printf("v:   "); glm_print(oppv()->dstval);
-
-    vec4 v4(v->dstval.x, v->dstval.y, v->dstval.z, 1.0f);
-    float error0 = dot(v4, v->Q * v4);
-    assert(fabs(error0) < 10.f * FLT_EPSILON);
-#endif
 }
 
 vec3

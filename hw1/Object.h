@@ -24,7 +24,6 @@ public:
     int framesleft; // number of remaining animation frames
     std::set<Hedge*> edges;
     Hedge* edge();
-    Vertex* child;
 
     Vertex(glm::vec3 val);
     int valence();
