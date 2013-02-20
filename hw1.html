@@ -83,19 +83,16 @@ class Vertex {
     glm::mat4 Q;
     glm::vec3 location;
     std::set&lt;Hedge*&gt; edges;
-};
-        </pre></div><div class="span4"><pre>
+};</pre></div><div class="span4"><pre>
 class Hedge {
     Face* face;
     Hedge* next;
     Hedge* pair;
     Vertex* vert;
-};
-        </pre></div><div class="span4"><pre>
+};</pre></div><div class="span4"><pre>
 class Face {
     Hedge* edge;
-};
-        </pre></div></div>
+};</pre></div></div>
 
         My code builds the mesh from the OFF file in several steps:
         <ol>
@@ -116,7 +113,7 @@ class Face {
       <p>
          This video shows a collapse that creates a fin, which is automatically removed. Smooth interpolation was only implemented for vertex splits, hence the choppiness during edge collapses.
       </p>
-      <iframe width="960" height="720" src="http://www.youtube.com/embed/qCuGN3rgkVA?rel=0" frameborder="0" allowfullscreen></iframe>
+      <iframe width="900" height="675" src="http://www.youtube.com/embed/qCuGN3rgkVA?rel=0" frameborder="0" allowfullscreen></iframe>
 
       <h4>IV. QEM and Progressive Meshes</h4>
       <p>
