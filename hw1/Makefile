@@ -8,7 +8,7 @@ OBJECTS = \
 		  viewer.o
 
 CXXFLAGS = -I/opt/local/include -O2
-LDFLAGS = -framework GLUT -framework OpenGL -L/opt/local/lib -lGLEW
+LDFLAGS = -framework GLUT -framework OpenGL
 default: viewer
 
 viewer: $(OBJECTS)

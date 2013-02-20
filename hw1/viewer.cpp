@@ -355,7 +355,12 @@ int main(int argc, char ** argv)
     glutKeyboardFunc(keyboard);
     glutMotionFunc(motion);
 
-    const char* input_filename = (argc < 2) ? "models/cone.off" : argv[1];
+    if (argc < 2) {
+        printf("Usage: %s path/to/model.off\n", argv[0]);
+        exit(1);
+    }
+
+    const char* input_filename = argv[1];
     for (int i = 2; i < argc; ++i)
         printf("ignoring argument: %s\n", argv[++i]);
 
