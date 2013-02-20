@@ -41,7 +41,7 @@
   <body>
     <div class="container-narrow">
       <div>
-          <h2>CS283 HW1: Mesh Simplication</h2>
+          <h2>CS283 HW1: Mesh Simplification</h2>
           <a href="http://www.cs.berkeley.edu/~driscoll/"><h4>Michael Driscoll</h4></a>
       </div>
       <hr>
@@ -111,7 +111,7 @@ class Face {
 
       <h4>III. Edge Decimation Method</h4>
       <p>
-        My edge-collapse method works as follows: a half-edge is identified as the edge to remove. Before mutating the mesh, I capture the original state in a <tt>VertexSplit</tt> object, which is pushed onto a stack of <tt>VertexSplits</tt>. Then, I designed the half-edge's vertex as the one to keep in the mesh; the other is marked for removal after its incident half-edges are tranferred to the remaining vertex. I fix up pairs between the other two half-edges' pairs in the face. I also make sure that collapsed edges not longer appear in the set of indicident edges maintained at each vertex. Next, if the target half-edge has a pair, then I repeat the process for the other face. Finally, I update the <tt>Q</tt> matrices for all vertices in the 1-neighborhood of the target vertex, and I recursively check and eliminate fins created by the newly-connected faces. All of these operations are local and occur in constant time, so my edge-collapse method is independent of model size.
+        My edge-collapse method works as follows: a half-edge is identified as the edge to remove. Before mutating the mesh, I capture the original state in a <tt>VertexSplit</tt> object, which is pushed onto a stack of <tt>VertexSplits</tt>. Then, I designed the half-edge's vertex as the one to keep in the mesh; the other is marked for removal after its incident half-edges are transferred to the remaining vertex. I fix up pairs between the other two half-edges' pairs in the face. I also make sure that collapsed edges not longer appear in the set of incident edges maintained at each vertex. Next, if the target half-edge has a pair, then I repeat the process for the other face. Finally, I update the <tt>Q</tt> matrices for all vertices in the 1-neighborhood of the target vertex, and I recursively check and eliminate fins created by the newly-connected faces. All of these operations are local and occur in constant time, so my edge-collapse method is independent of model size.
       </p>
       <p>
          This video shows a collapse that creates a fin, which is automatically removed. Smooth interpolation was only implemented for vertex splits, hence the choppiness during edge collapses.
@@ -135,7 +135,7 @@ class Face {
       </p>
 
       <h4>V. Results - Sphere Model</h4>
-      <p>The images below show the sphere model undergoing coarsening. The first image is the original mesh, and each succesive image has half the vertices as the previous image.</p>
+      <p>The images below show the sphere model undergoing coarsening. The first image is the original mesh, and each successive image has half the vertices as the previous image.</p>
       <ul class="thumbnails">
       <li class="span6"><img src="./img/sp482.png" alt=""></a></li>
       <li class="span6"><img src="./img/spw482.png" alt=""></a></li>
@@ -162,7 +162,7 @@ class Face {
       </ul>
 
       <h4>VI. Results - Moomoo Model</h4>
-      <p>The images below show the performance of my algorithm on a more-complicated shape than the sphere. As before, the first image is the original mesh, and each succesive image has half the vertices as the previous image.</p>
+      <p>The images below show the performance of my algorithm on a more-complicated shape than the sphere. As before, the first image is the original mesh, and each successive image has half the vertices as the previous image.</p>
       <ul class="thumbnails">
       <li class="span6"><img src="./img/mm3200.png" alt=""></a></li>
       <li class="span6"><img src="./img/mmw3200.png" alt=""></a></li>
