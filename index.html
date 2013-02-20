@@ -25,171 +25,32 @@
 
     <style>
     p {
-        margin-bottom: 16px;
+      margin-top: 12px;
+      margin-bottom: 12px;
     }
-    a.thumbnail {
-        border-width: 0px;
-        box-shadow: none;
-    }
-    h4 {
-        margin-top: 32px;
-        margin-bottom: 16px;
+    .btn {
+      margin-top: 12px;
+      margin-bottom: 12px;
     }
     </style>
   </head>
 
   <body>
     <div class="container-narrow">
-      <div>
-          <h2>CS283 HW1: Mesh Simplication</h2>
-          <a href="http://www.cs.berkeley.edu/~driscoll/"><h4>Michael Driscoll</h4></a>
-      </div>
-      <hr>
-
-      <h4>I. Mesh Viewer</h4>
-      <p>
-        My mesh viewer is based on the OpenGL viewer from Pixar's OpenSubdiv package. It provides rotation and scaling capability, and attempts to center the object automatically. I can enable drawing of face normals and/or vertex normals, wireframe or solid triangles, and automatic animation via a basic ``heads-up display'' developed by Pixar. The display also shows the current number of vertices and faces in the model.</p>
-
-<ul class="thumbnails">
-  <li class="span6">
-    <a href="./img/viewer0.png" class="thumbnail"><img src="./img/viewer0.png" alt=""></a>
-  </li>
-  <li class="span6">
-    <a href="./img/viewer1.png" class="thumbnail"><img src="./img/viewer1.png" alt=""></a>
-  </li>
-</ul>
-
-<ul class="thumbnails">
-  <li class="span3">
-     <a href="./img/viewerA.png" class="thumbnail"><img src="./img/viewerA.png" alt=""></a>
-  </li>
-  <li class="span3">
-    <a href="./img/viewerB.png" class="thumbnail"><img src="./img/viewerB.png" alt=""></a>
-  </li>
-  <li class="span3">
-    <a href="./img/viewerC.png" class="thumbnail"><img src="./img/viewerC.png" alt=""></a>
-  </li>
-  <li class="span3">
-    <a href="./img/viewerD.png" class="thumbnail"><img src="./img/viewerD.png" alt=""></a>
-  </li>
-</ul>
-
-      <h4>II. Mesh Data Structure</h4>
-      <p>
-        I implemented a variation of the half-edge data structure. My data structure only differs in the <tt>Vertex</tt> class, which maintains a <tt>set</tt> of incident half-edges instead of a pointer to a single half-edge. This modification simplifies vertex-vertex and vertex-face adjacency lookups greatly. It also supports meshes in which a vertex borders more than two boundary edges.
+      <div class="hero-unit">
         <div class="row">
-        <div class="span4"><pre>
-class Vertex {
-    glm::mat4 Q;
-    glm::vec3 location;
-    std::set&lt;Hedge*&gt; edges;
-};
-        </pre></div><div class="span4"><pre>
-class Hedge {
-    Face* face;
-    Hedge* next;
-    Hedge* pair;
-    Vertex* vert;
-};
-        </pre></div><div class="span4"><pre>
-class Face {
-    Hedge* edge;
-};
-        </pre></div></div>
-
-        My code builds the mesh from the OFF file in several steps:
-        <ol>
-          <li>Parse the header and allocate memory for vertices, edges, and faces.</li>
-          <li>Parse the vertex list, creating vertices and storing them in a vector indexed by their ID.</li>
-          <li>Parse the edge list, creating the requisite half-edges and faces.</li>
-          <li>Fix up half-edge pairs in two passes: first to populate a temporary mapping from vertex-vertex pairs to half-edges, and second to extract and set the paired half-edge from the map.</li>
-          <li>Update Q matrices for all vertices, and insert all half-edges into a heap queue on their quadric error.</li>
-        </ol>
-
-        Modifications to the mesh required for edge-collapses are described in the next section.
-      </p>
-
-      <h4>III. Edge Decimation Method</h4>
-      <p>
-        My edge-collapse method works as follows: a half-edge is identified as the edge to remove. Before mutating the mesh, I capture the original state in a <tt>VertexSplit</tt> object, which is pushed onto a stack of <tt>VertexSplits</tt>. Then, I designed the half-edge's vertex as the one to keep in the mesh; the other is marked for removal after its incident half-edges are tranferred to the remaining vertex. I fix up pairs between the other two half-edges' pairs in the face. I also make sure that collapsed edges not longer appear in the set of indicident edges maintained at each vertex. Next, if the target half-edge has a pair, then I repeat the process for the other face. Finally, I update the <tt>Q</tt> matrices for all vertices in the 1-neighborhood of the target vertex, and I recursively check and eliminate fins created by the newly-connected faces. All of these operations are local and occur in constant time, so my edge-collapse method is independent of model size.
-      </p>
-      <p>
-         This video shows a collapse that creates a fin, which is automatically removed. Smooth interpolation was only implemented for vertex splits, hence the choppiness during edge collapses.
-      </p>
-      <iframe width="960" height="720" src="http://www.youtube.com/embed/qCuGN3rgkVA?rel=0" frameborder="0" allowfullscreen></iframe>
-
-      <h4>IV. QEM and Progressive Meshes</h4>
-      <p>
-        My implementation of QEM follows directly from that described by Garland and Heckbert, with a few differences. I only implement edge collapses, not general pair collapses. Similarly, I place new vertices at edge midpoints if the <tt>Q</tt> matrix is not invertible, instead of finding the optimal location along the edge and/or choosing between the midpoint and endpoints.
-      </p>
-      <p>
-        I use a <a href="http://www.boost.org/doc/libs/1_53_0/doc/html/boost/heap/binomial_heap.html">binomial heap</a> from the Boost C++ Library to maintain a sorted list of edges to collapse. The heap provides an <tt>update</tt> method to resort individual vertices when their quadric error changes. Like any good heap implementation, access to the top element takes constant time and insertions and updates take <tt>log(n)</tt> time.
-      </p>
-      <p>
-        Like Hoppe, I use a linear interpolation to create a smooth transitions during vertex splits. This could be extended to edge collapses too, but I haven't implemented it. The linear scheme does have its drawbacks--when vertices first move from their starting location, a new face suddenly appears and instantly changes the surrounding vertex normals (and hence their shading). If it hasn't been tried before, an interesting project might be to designed a transition scheme that results in smooth normal adjustments.
-      </p>
-      <p>
-        <iframe width="900" height="675" src="http://www.youtube.com/embed/6iHGN2myD7E?rel=0" frameborder="0" allowfullscreen></iframe>
-        <iframe width="900" height="675" src="http://www.youtube.com/embed/ui8zilytDls?rel=0" frameborder="0" allowfullscreen></iframe>
-        <iframe width="900" height="675" src="http://www.youtube.com/embed/87cBm86LKOk?rel=0" frameborder="0" allowfullscreen></iframe>
-      </p>
-
-      <h4>V. Results - Sphere Model</h4>
-      <ul class="thumbnails">
-      <li class="span6"><img src="./img/sp482.png" alt=""></a></li>
-      <li class="span6"><img src="./img/spw482.png" alt=""></a></li>
-      </ul>
-      <ul class="thumbnails">
-      <li class="span6"><img src="./img/sp100.png" alt=""></a></li>
-      <li class="span6"><img src="./img/spw100.png" alt=""></a></li>
-      </ul>
-      <ul class="thumbnails">
-      <li class="span6"><img src="./img/sp50.png" alt=""></a></li>
-      <li class="span6"><img src="./img/spw50.png" alt=""></a></li>
-      </ul>
-      <ul class="thumbnails">
-      <li class="span6"><img src="./img/sp25.png" alt=""></a></li>
-      <li class="span6"><img src="./img/spw25.png" alt=""></a></li>
-      </ul>
-      <ul class="thumbnails">
-      <li class="span6"><img src="./img/sp12.png" alt=""></a></li>
-      <li class="span6"><img src="./img/spw12.png" alt=""></a></li>
-      </ul>
-      <ul class="thumbnails">
-      <li class="span6"><img src="./img/sp4.png" alt=""></a></li>
-      <li class="span6"><img src="./img/spw4.png" alt=""></a></li>
-      </ul>
-
-      <h4>VI. Results - Moomoo Model</h4>
-      <ul class="thumbnails">
-      <li class="span6"><img src="./img/mm3200.png" alt=""></a></li>
-      <li class="span6"><img src="./img/mmw3200.png" alt=""></a></li>
-      </ul>
-      <ul class="thumbnails">
-      <li class="span6"><img src="./img/mm800.png" alt=""></a></li>
-      <li class="span6"><img src="./img/mmw800.png" alt=""></a></li>
-      </ul>
-      <ul class="thumbnails">
-      <li class="span6"><img src="./img/mm400.png" alt=""></a></li>
-      <li class="span6"><img src="./img/mmw400.png" alt=""></a></li>
-      </ul>
-      <ul class="thumbnails">
-      <li class="span6"><img src="./img/mm200.png" alt=""></a></li>
-      <li class="span6"><img src="./img/mmw200.png" alt=""></a></li>
-      </ul>
-      <ul class="thumbnails">
-      <li class="span6"><img src="./img/mm100.png" alt=""></a></li>
-      <li class="span6"><img src="./img/mmw100.png" alt=""></a></li>
-      </ul>
-      <ul class="thumbnails">
-      <li class="span6"><img src="./img/mm50.png" alt=""></a></li>
-      <li class="span6"><img src="./img/mmw50.png" alt=""></a></li>
-      </ul>
-
-      <h4>VII. Source Code</h4>
-      <p>
-        My code is available for download at <a href="https://github.com/mbdriscoll/cs283">github.com/mbdriscoll/cs283</a>. It was developed using Boost 1.52.0, GLM 0.9.3, Mac OS 10.8.2, and Clang 4.1.
-      </p>
+          <div class="span6">
+            <h2>CS283 Assignments</h2>
+            <p><a href="http://www.cs.berkeley.edu/~driscoll/"><h4>Michael Driscoll</h4></a></p>
+          </div>
+          <div class="span4">
+            <a class="btn btn-primary btn-large btn-block" href="hw1.html">Mesh Simplication</a>
+            <a class="btn btn-primary btn-large btn-block disabled" href="#">Monte Carlo Rendering</a>
+            <a class="btn btn-primary btn-large btn-block disabled" href="#">Real-time Rendering</a>
+            <a class="btn btn-primary btn-large btn-block disabled" href="#">Course Project</a>
+          </div>
+      </div>
+    </div>
 
   </body>
 </html>
