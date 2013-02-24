@@ -55,7 +55,7 @@ Scene::Scene(char *scenefilename) {
         } else if (cmd == "sphere") {
             Sphere *o = new Sphere();
             fscanf(sfile, "%f %f %f %f", &o->p.x, &o->p.y, &o->p.z, &o->r);
-            // TODO register sphere with scene
+            objs.push_back(o);
 
         } else if (cmd == "maxverts") {
             int maxverts;
@@ -82,13 +82,13 @@ Scene::Scene(char *scenefilename) {
             int i0, i1, i2;
             fscanf(sfile, "%d %d %d", &i0, &i1, &i2);
             Tri *t = new Tri(verts[i0], verts[i1], verts[i2]);
-            // TODO register triangle with scene
+            objs.push_back(t);
 
         } else if (cmd == "trinormal") {
             int i0, i1, i2;
             fscanf(sfile, "%d %d %d", &i0, &i1, &i2);
             TriNormal *t = new TriNormal(vertnorms[i0], vertnorms[i1], vertnorms[i2]);
-            // TODO register trinormal with scene
+            objs.push_back(t);
 
         } else if (cmd == "translate") {
             glm::vec3 v;
@@ -112,7 +112,7 @@ Scene::Scene(char *scenefilename) {
             fscanf(sfile, "%f %f %f %f %f %f",
                     &l->pos.x, &l->pos.y, &l->pos.z,
                     &l->color.r, &l->color.g, &l->color.b);
-            // TODO register light with scene
+            lights.push_back(l);
 
         } else if (cmd == "point") {
             Light *l = new Light();
