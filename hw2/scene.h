@@ -8,32 +8,49 @@
 
 typedef std::pair<glm::vec3,glm::vec3> vertnorm;
 
+class MatSpec {
+  public:
+    glm::vec3 diffuse, specular, emission;
+    float shininess;
+};
+
+class LightSpec {
+  public:
+    glm::vec3 atten, ambient;
+};
+
 class Object {
+  public:
+    Object(MatSpec &mat) : mat(mat) {}
+    MatSpec mat;
 };
 
 class Sphere : public Object {
   public:
+    Sphere(MatSpec &mat) : Object(mat) {}
     glm::vec3 p;
     float r;
 };
 
 class Tri : public Object {
   public:
-    Tri(glm::vec3 v0, glm::vec3 v1, glm::vec3 v2) :
-        v0(v0), v1(v1), v2(v2) { }
+    Tri(MatSpec &mat, glm::vec3 v0, glm::vec3 v1, glm::vec3 v2) :
+        Object(mat), v0(v0), v1(v1), v2(v2) { }
     glm::vec3 v0, v1, v2;
 };
 
 class TriNormal : public Object {
   public:
-    TriNormal(vertnorm v0, vertnorm v1, vertnorm v2) :
-        v0(v0), v1(v1), v2(v2) { }
+    TriNormal(MatSpec &mat, vertnorm v0, vertnorm v1, vertnorm v2) :
+        Object(mat), v0(v0), v1(v1), v2(v2) { }
     vertnorm v0, v1, v2;
 };
 
 class Light {
   public:
+    Light(LightSpec &lspec) : lspec(lspec) {}
     glm::vec3 pos, color;
+    LightSpec lspec;
 };
 
 class Scene {
@@ -43,8 +60,9 @@ class Scene {
   private:
     int width, height, maxdepth;
     std::string output_fname;
-    glm::vec3 atten, ambient, diffuse, specular, emission;
-    float shininess;
+
+    MatSpec mat;
+    LightSpec lightspec;
 
     glm::vec3 camera_at, camera_to, camera_up;
     float fov;
