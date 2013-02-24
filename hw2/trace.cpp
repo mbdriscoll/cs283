@@ -1,10 +1,25 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
+#include <string>
 
-#include "image.h"
+#include <cstdlib>
+#include <cstdio>
+#include <cmath>
 
-float *createMandelbrotImage(int width, int height, float xS, float yS, float rad, int maxIteration)
+#include <glm/glm.hpp>
+
+using namespace std;
+using namespace glm;
+
+extern "C" {
+    #include "image.h"
+}
+
+/* Global variables for problem instance */
+int width = 500,
+    height = 300,
+    depth = 5;
+char *image_fname = (char*) "image.png";
+
+float *raytrace(int width, int height, float xS, float yS, float rad, int maxIteration)
 {
 	float *buffer = (float *) malloc(width * height * sizeof(float));
 	if (buffer == NULL) {
@@ -40,7 +55,7 @@ float *createMandelbrotImage(int width, int height, float xS, float yS, float ra
 
 			if (iteration < maxIteration) {
 				float modZ = sqrt(x*x + y*y);
-				float mu = iteration - (log(log(modZ))) / log(2);
+				float mu = iteration - (std::log(std::log(modZ))) / std::log(2);
 				if (mu > maxMu) maxMu = mu;
 				if (mu < minMu) minMu = mu;
 				buffer[yPos * width + xPos] = mu;
@@ -65,28 +80,20 @@ int main(int argc, char *argv[])
 {
 	// Make sure that the output filename argument has been provided
 	if (argc != 2) {
-		fprintf(stderr, "Please specify output file\n");
-		return 1;
+		fprintf(stderr, "Usage: %s path/to/scene.test\n", argv[0]);
+        exit(1);
 	}
 
-	// Specify an output image size
-	int width = 500;
-	int height = 300;
+    // parse scene file
 
-	// Create a test image - in this case a Mandelbrot Set fractal
-	// The output is a 1D array of floats, length: width * height
-	printf("Creating Image\n");
-	float *buffer = createMandelbrotImage(width, height, -0.802, -0.177, 0.011, 110);
-	if (buffer == NULL) {
-		return 1;
-	}
 
-	// Save the image to a PNG file
-	// The 'title' string is stored as part of the PNG file
-	printf("Saving PNG\n");
-	int result = writeImage(argv[1], width, height, buffer, "This is my test image");
+    // do raytracing
+	float *buffer = raytrace(width, height, -0.802, -0.177, 0.011, 110);
 
-	// Free up the memorty used to store the image
+	// save the image
+	int result = writeImage(argv[1], width, height, buffer, image_fname);
+
+	// release image buffer
 	free(buffer);
 
 	return result;
