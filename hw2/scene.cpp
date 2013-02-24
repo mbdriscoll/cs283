@@ -93,19 +93,24 @@ Scene::Scene(char *scenefilename) {
         } else if (cmd == "translate") {
             glm::vec3 v;
             fscanf(sfile, "%f %f %f", &v.x, &v.y, &v.z);
+            xforms.top() = glm::translate(xforms.top(), v);
 
         } else if (cmd == "rotate") {
             glm::vec3 v;
             float angle;
             fscanf(sfile, "%f %f %f %f", &v.x, &v.y, &v.z, &angle);
+            xforms.top() = glm::rotate(xforms.top(), angle, v);
 
         } else if (cmd == "scale") {
             glm::vec3 v;
             fscanf(sfile, "%f %f %f", &v.x, &v.y, &v.z);
+            xforms.top() = glm::scale(xforms.top(), v);
 
         } else if (cmd == "pushTransform") {
+            xforms.push( glm::mat4(1.0) );
 
         } else if (cmd == "popTransform") {
+            xforms.pop();
 
         } else if (cmd == "directional") {
             Light *l = new Light(lightspec);
@@ -147,6 +152,9 @@ Scene::Scene(char *scenefilename) {
     }
 
     fclose(sfile);
+
+    // push the identity onto the transformation stack
+    xforms.push( glm::mat4(1.0) );
 }
 
 void

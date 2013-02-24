@@ -3,8 +3,10 @@
 
 #include <string>
 #include <vector>
+#include <stack>
 
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 typedef std::pair<glm::vec3,glm::vec3> vertnorm;
 
@@ -66,11 +68,14 @@ class Scene {
 
     glm::vec3 camera_at, camera_to, camera_up;
     float fov;
+
     std::vector<glm::vec3> verts;
     std::vector<vertnorm> vertnorms;
 
     std::vector<Object*> objs;
     std::vector<Light*> lights;
+
+    std::stack<glm::mat4> xforms;
 };
 
 #endif /* _TRACE_SCENE_H_ */
