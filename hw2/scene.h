@@ -20,7 +20,7 @@ class LightSpec {
   public:
     glm::vec3 atten, ambient;
 
-    LighSpec() :
+    LightSpec() :
         ambient( glm::vec3(0.2f, 0.2f, 0.2f) ),
         atten  ( glm::vec3(1.0f, 0.0f, 0.0f) )
     {}
@@ -64,6 +64,7 @@ class Scene {
   public:
     Scene(char *scenefilename);
     void RayTrace();
+    void Preview();
   private:
     int width, height, maxdepth;
     std::string output_fname;

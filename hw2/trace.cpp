@@ -74,16 +74,26 @@ float *raytrace(int width, int height, float xS, float yS, float rad, int maxIte
 int main(int argc, char *argv[])
 {
 	// Make sure that the output filename argument has been provided
-	if (argc != 2) {
+	if (argc < 2) {
 		fprintf(stderr, "Usage: %s path/to/scene.test\n", argv[0]);
         exit(1);
 	}
 
+    bool preview = false;
+
+    int i = 1;
+    for (int i = 0; i < argc; i++) {
+        if (!strcmp(argv[i++],"-p"))
+            preview = true;
+    }
+
     // parse scene file
     Scene *s = new Scene((char*) argv[1]);
 
-    // do raytracing
-	s->RayTrace();
+    if (preview)
+        s->Preview();
+    else
+        s->RayTrace();
 
     // release resources
     delete s;

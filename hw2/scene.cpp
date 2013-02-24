@@ -7,7 +7,7 @@
 
 using namespace std;
 
-Scene::Scene(char *scenefilename) {
+Scene::Scene(char *scenefilename) : output_fname("scene.png") {
     FILE* sfile = fopen(scenefilename, "r");
     if (sfile == NULL) {
         fprintf(stderr, "Unable to open scene file: %s\n", scenefilename);
@@ -163,4 +163,5 @@ Scene::Scene(char *scenefilename) {
 
 void
 Scene::RayTrace() {
+    printf("raytracing...\n");
 }
