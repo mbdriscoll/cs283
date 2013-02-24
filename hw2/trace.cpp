@@ -6,12 +6,13 @@
 
 #include <glm/glm.hpp>
 
+#include "scene.h"
+#include "image.h"
+
+#define MAX_LINE_LENGTH 1024
+
 using namespace std;
 using namespace glm;
-
-extern "C" {
-    #include "image.h"
-}
 
 /* Global variables for problem instance */
 int width = 500,
@@ -85,13 +86,13 @@ int main(int argc, char *argv[])
 	}
 
     // parse scene file
-
+    Scene *s = new Scene((char*) argv[1]);
 
     // do raytracing
 	float *buffer = raytrace(width, height, -0.802, -0.177, 0.011, 110);
 
 	// save the image
-	int result = writeImage(argv[1], width, height, buffer, image_fname);
+	int result = writeImage(image_fname, width, height, buffer, image_fname);
 
 	// release image buffer
 	free(buffer);
