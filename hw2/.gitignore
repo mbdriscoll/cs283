@@ -1,3 +1,4 @@
 trace
 *.o
 *.png
+trace.dSYM

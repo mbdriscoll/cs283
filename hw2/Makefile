@@ -10,6 +10,7 @@ default: $(TARGET)
 $(TARGET): $(OBJECTS)
 
 image.cpp: image.h
+scene.cpp: scene.h
 
 .PHONY: clean
 clean:
