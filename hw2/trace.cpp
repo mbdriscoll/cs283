@@ -14,12 +14,6 @@
 using namespace std;
 using namespace glm;
 
-/* Global variables for problem instance */
-int width = 500,
-    height = 300,
-    depth = 5;
-char *image_fname = (char*) "image.png";
-
 float *raytrace(int width, int height, float xS, float yS, float rad, int maxIteration)
 {
 	float *buffer = (float *) malloc(width * height * sizeof(float));
@@ -89,14 +83,11 @@ int main(int argc, char *argv[])
     Scene *s = new Scene((char*) argv[1]);
 
     // do raytracing
-	float *buffer = raytrace(width, height, -0.802, -0.177, 0.011, 110);
+	s->RayTrace();
 
-	// save the image
-	int result = writeImage(image_fname, width, height, buffer, image_fname);
+    // release resources
+    delete s;
 
-	// release image buffer
-	free(buffer);
-
-	return result;
+	return 0;
 }
 

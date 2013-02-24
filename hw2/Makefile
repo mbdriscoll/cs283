@@ -13,4 +13,4 @@ image.cpp: image.h
 
 .PHONY: clean
 clean:
-	rm -rf $(TARGET) $(OBJECTS)
+	rm -rf $(TARGET) $(OBJECTS) *.png
