@@ -19,6 +19,11 @@ class MatSpec {
 class LightSpec {
   public:
     glm::vec3 atten, ambient;
+
+    LighSpec() :
+        ambient( glm::vec3(0.2f, 0.2f, 0.2f) ),
+        atten  ( glm::vec3(1.0f, 0.0f, 0.0f) )
+    {}
 };
 
 class Object {
