@@ -63,9 +63,6 @@ class Scene {
     int width, height, maxdepth;
     std::string output_fname;
 
-    MatSpec mat;
-    LightSpec lightspec;
-
     glm::vec3 camera_at, camera_to, camera_up;
     float fov;
 

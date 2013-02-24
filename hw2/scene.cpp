@@ -17,6 +17,10 @@ Scene::Scene(char *scenefilename) {
     int nscanned;
     bool done = false;
     char *buf = (char*) malloc(MAX_LINE_LENGTH);
+
+    MatSpec mat;
+    LightSpec lightspec;
+
     while (!done) {
         nscanned = fscanf(sfile, "%s", buf);
 
