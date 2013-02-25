@@ -7,6 +7,14 @@
 
 using namespace std;
 
+inline glm::mat4
+XF(std::vector<glm::mat4> &xforms) {
+    glm::mat4 xf(1.0);
+    foreach (glm::mat4 &M, xforms)
+        xf = xf * M;
+    return xf;
+}
+
 Scene::Scene(char *scenefilename) : output_fname("scene.png") {
     FILE* sfile = fopen(scenefilename, "r");
     if (sfile == NULL) {
@@ -18,9 +26,10 @@ Scene::Scene(char *scenefilename) : output_fname("scene.png") {
     bool done = false;
     char *buf = (char*) malloc(MAX_LINE_LENGTH);
 
-    MatSpec mat;
-    std::stack<glm::mat4> xforms;
-    xforms.push( glm::mat4(1.0) );
+    MatSpec material;
+    std::vector<glm::mat4> xforms;
+    xforms.reserve(20);
+    xforms.push_back( glm::mat4(1.0) );
 
     while (!done) {
         nscanned = fscanf(sfile, "%s", buf);
@@ -52,13 +61,15 @@ Scene::Scene(char *scenefilename) : output_fname("scene.png") {
             output_fname = string(buf);
 
         } else if (cmd == "camera") {
+            glm::vec3 eye, center, up;
             fscanf(sfile, "%f %f %f %f %f %f %f %f %f %f",
                     &eye.x, &eye.y, &eye.z,
                     &center.x, &center.y, &center.z,
                     &up.x, &up.y, &up.z, &fov);
+            xforms.push_back( glm::lookAt(eye,center,up) );
 
         } else if (cmd == "sphere") {
-            Sphere *o = new Sphere(mat);
+            Sphere *o = new Sphere(XF(xforms), material);
             fscanf(sfile, "%f %f %f %f", &o->p.x, &o->p.y, &o->p.z, &o->r);
             objs.push_back(o);
 
@@ -86,36 +97,37 @@ Scene::Scene(char *scenefilename) : output_fname("scene.png") {
         } else if (cmd == "tri") {
             int i0, i1, i2;
             fscanf(sfile, "%d %d %d", &i0, &i1, &i2);
-            Tri *t = new Tri(mat, verts[i0], verts[i1], verts[i2]);
+            Tri *t = new Tri(XF(xforms), material, verts[i0], verts[i1], verts[i2]);
             objs.push_back(t);
 
         } else if (cmd == "trinormal") {
             int i0, i1, i2;
             fscanf(sfile, "%d %d %d", &i0, &i1, &i2);
-            TriNormal *t = new TriNormal(mat, vertnorms[i0], vertnorms[i1], vertnorms[i2]);
+            TriNormal *t = new TriNormal(XF(xforms), material,
+                    vertnorms[i0], vertnorms[i1], vertnorms[i2]);
             objs.push_back(t);
 
         } else if (cmd == "translate") {
             glm::vec3 v;
             fscanf(sfile, "%f %f %f", &v.x, &v.y, &v.z);
-            xforms.top() = glm::translate(xforms.top(), v);
+            xforms.back() = glm::translate(xforms.back(), v);
 
         } else if (cmd == "rotate") {
             glm::vec3 v;
             float angle;
             fscanf(sfile, "%f %f %f %f", &v.x, &v.y, &v.z, &angle);
-            xforms.top() = glm::rotate(xforms.top(), angle, v);
+            xforms.back() = glm::rotate(xforms.back(), angle, v);
 
         } else if (cmd == "scale") {
             glm::vec3 v;
             fscanf(sfile, "%f %f %f", &v.x, &v.y, &v.z);
-            xforms.top() = glm::scale(xforms.top(), v);
+            xforms.back() = glm::scale(xforms.back(), v);
 
         } else if (cmd == "pushTransform") {
-            xforms.push( glm::mat4(1.0) );
+            xforms.push_back( glm::mat4(1.0) );
 
         } else if (cmd == "popTransform") {
-            xforms.pop();
+            xforms.pop_back();
 
         } else if (cmd == "directional") {
             Light *l = new Light();
@@ -132,23 +144,26 @@ Scene::Scene(char *scenefilename) : output_fname("scene.png") {
 
         } else if (cmd == "attentuation") {
             fscanf(sfile, "%f %f %f",
-                    &mat.atten.r, &mat.atten.g, &mat.atten.b);
+                    &material.atten.r, &material.atten.g, &material.atten.b);
 
         } else if (cmd == "ambient") {
             fscanf(sfile, "%f %f %f",
-                    &mat.ambient.r, &mat.ambient.g, &mat.ambient.b);
+                    &material.ambient.r, &material.ambient.g, &material.ambient.b);
 
         } else if (cmd == "diffuse") {
-            fscanf(sfile, "%f %f %f", &mat.diffuse.r, &mat.diffuse.g, &mat.diffuse.b);
+            fscanf(sfile, "%f %f %f",
+                    &material.diffuse.r, &material.diffuse.g, &material.diffuse.b);
 
         } else if (cmd == "specular") {
-            fscanf(sfile, "%f %f %f", &mat.specular.r, &mat.specular.g, &mat.specular.b);
+            fscanf(sfile, "%f %f %f",
+                    &material.specular.r, &material.specular.g, &material.specular.b);
 
         } else if (cmd == "shininess") {
-            fscanf(sfile, "%f", &mat.shininess);
+            fscanf(sfile, "%f", &material.shininess);
 
         } else if (cmd == "emission") {
-            fscanf(sfile, "%f %f %f", &mat.emission.r, &mat.emission.g, &mat.emission.b);
+            fscanf(sfile, "%f %f %f",
+                    &material.emission.r, &material.emission.g, &material.emission.b);
 
         } else {
             printf("Unregcognized command: %s\n", cmd.c_str());

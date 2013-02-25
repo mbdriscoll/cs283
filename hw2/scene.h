@@ -26,15 +26,21 @@ class MatSpec {
 
 class Object {
   public:
-    Object(MatSpec &mat) : mat(mat) {}
+    Object(glm::mat4 xform, MatSpec &material) :
+        xform(xform), material(material)
+    {}
 
     virtual void Render();
-    MatSpec mat;
+
+    MatSpec material;
+    glm::mat4 xform;
 };
 
 class Sphere : public Object {
   public:
-    Sphere(MatSpec &mat) : Object(mat) {}
+    Sphere(glm::mat4 xform, MatSpec &material) :
+        Object(xform, material)
+    {}
     virtual void Render();
 
     glm::vec3 p;
@@ -43,8 +49,8 @@ class Sphere : public Object {
 
 class Tri : public Object {
   public:
-    Tri(MatSpec &mat, glm::vec3 v0, glm::vec3 v1, glm::vec3 v2) :
-        Object(mat), v0(v0), v1(v1), v2(v2) { }
+    Tri(glm::mat4 xform, MatSpec &material, glm::vec3 v0, glm::vec3 v1, glm::vec3 v2) :
+        Object(xform, material), v0(v0), v1(v1), v2(v2) { }
     virtual void Render();
 
     glm::vec3 v0, v1, v2;
@@ -52,8 +58,8 @@ class Tri : public Object {
 
 class TriNormal : public Object {
   public:
-    TriNormal(MatSpec &mat, vertnorm v0, vertnorm v1, vertnorm v2) :
-        Object(mat), v0(v0), v1(v1), v2(v2) { }
+    TriNormal(glm::mat4 xform, MatSpec &material, vertnorm v0, vertnorm v1, vertnorm v2) :
+        Object(xform, material), v0(v0), v1(v1), v2(v2) { }
     void Render();
 
     vertnorm v0, v1, v2;
@@ -77,7 +83,6 @@ class Scene {
     int width, height, maxdepth;
     std::string output_fname;
 
-    glm::vec3 eye, center, up;
     float fov;
 
     std::vector<glm::vec3> verts;

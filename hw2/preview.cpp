@@ -10,7 +10,8 @@ Scene *scene = NULL;
 
 void
 Object::Render() {
-    glColor3fv( &mat.ambient.r );
+    glColor3fv( &material.ambient.r );
+    glLoadMatrixf( (const float *) &xform[0] );
 }
 
 void
@@ -57,11 +58,6 @@ Light::Render() {
 
 void
 Scene::Render() {
-
-    gluLookAt(eye.x, eye.y, eye.z,
-            center.x, center.y, center.z,
-            up.x, up.y, up.z);
-
     foreach( Object* o, objs )
         o->Render();
 }
