@@ -69,8 +69,11 @@ Scene::Scene(char *scenefilename) : output_fname("scene.png") {
             xforms.push_back( glm::lookAt(eye,center,up) );
 
         } else if (cmd == "sphere") {
-            Sphere *o = new Sphere(XF(xforms), material);
-            fscanf(sfile, "%f %f %f %f", &o->p.x, &o->p.y, &o->p.z, &o->r);
+            float r;
+            glm::vec3 p;
+            fscanf(sfile, "%f %f %f %f", &p.x, &p.y, &p.z, &r);
+            glm::mat4 M = glm::translate(glm::mat4(1), p);
+            Sphere *o = new Sphere(XF(xforms)*M, material, r);
             objs.push_back(o);
 
         } else if (cmd == "maxverts") {

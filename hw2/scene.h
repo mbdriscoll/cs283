@@ -38,12 +38,11 @@ class Object {
 
 class Sphere : public Object {
   public:
-    Sphere(glm::mat4 xform, MatSpec &material) :
-        Object(xform, material)
+    Sphere(glm::mat4 xform, MatSpec &material, float r) :
+        Object(xform, material), r(r)
     {}
     virtual void Render();
 
-    glm::vec3 p;
     float r;
 };
 

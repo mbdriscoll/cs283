@@ -29,10 +29,7 @@ Tri::Render() {
 void
 Sphere::Render() {
     this->Object::Render();
-    glPushMatrix();
-    glTranslatef(p.x, p.y, p.z);
     glutSolidSphere(r, 64, 64);
-    glPopMatrix();
 }
 
 void
