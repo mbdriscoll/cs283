@@ -64,15 +64,15 @@ class TriNormal : public Object {
     vertnorm vn0, vn1, vn2;
 };
 
+static int light_next_num = 0;
 class Light {
   public:
-    Light() : lnum(next_num++) {}
+    Light() : lnum(light_next_num++) {}
     void Render();
     void Init();
 
     glm::vec3 pos, color;
     int lnum;
-    static int next_num;
 };
 
 class Scene {
