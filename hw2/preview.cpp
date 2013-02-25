@@ -40,14 +40,14 @@ TriNormal::Render() {
     this->Object::Render();
     glBegin(GL_TRIANGLES);
 
-    glNormal3fv( &v0.second.x );
-    glVertex3fv( &v0.first.x );
+    glNormal3fv( &vn0.second.x );
+    glVertex3fv( &vn0.first.x );
 
-    glNormal3fv( &v1.second.x );
-    glVertex3fv( &v1.first.x );
+    glNormal3fv( &vn1.second.x );
+    glVertex3fv( &vn1.first.x );
 
-    glNormal3fv( &v2.second.x );
-    glVertex3fv( &v2.first.x );
+    glNormal3fv( &vn2.second.x );
+    glVertex3fv( &vn2.first.x );
 
     glEnd();
 }

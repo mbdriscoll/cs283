@@ -58,11 +58,11 @@ class Tri : public Object {
 
 class TriNormal : public Object {
   public:
-    TriNormal(glm::mat4 xform, MatSpec &material, vertnorm v0, vertnorm v1, vertnorm v2) :
-        Object(xform, material), v0(v0), v1(v1), v2(v2) { }
+    TriNormal(glm::mat4 xform, MatSpec &material, vertnorm vn0, vertnorm vn1, vertnorm vn2) :
+        Object(xform, material), vn0(vn0), vn1(vn1), vn2(vn2) { }
     void Render();
 
-    vertnorm v0, v1, v2;
+    vertnorm vn0, vn1, vn2;
 };
 
 class Light {
