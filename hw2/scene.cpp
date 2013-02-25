@@ -20,6 +20,8 @@ Scene::Scene(char *scenefilename) : output_fname("scene.png") {
 
     MatSpec mat;
     LightSpec lightspec;
+    std::stack<glm::mat4> xforms;
+    xforms.push( glm::mat4(1.0) );
 
     while (!done) {
         nscanned = fscanf(sfile, "%s", buf);
@@ -52,9 +54,9 @@ Scene::Scene(char *scenefilename) : output_fname("scene.png") {
 
         } else if (cmd == "camera") {
             fscanf(sfile, "%f %f %f %f %f %f %f %f %f %f",
-                    &camera_at.x, &camera_at.y, &camera_at.z,
-                    &camera_to.x, &camera_to.y, &camera_to.z,
-                    &camera_up.x, &camera_up.y, &camera_up.z, &fov);
+                    &eye.x, &eye.y, &eye.z,
+                    &center.x, &center.y, &center.z,
+                    &up.x, &up.y, &up.z, &fov);
 
         } else if (cmd == "sphere") {
             Sphere *o = new Sphere(mat);
@@ -156,9 +158,6 @@ Scene::Scene(char *scenefilename) : output_fname("scene.png") {
     }
 
     fclose(sfile);
-
-    // push the identity onto the transformation stack
-    xforms.push( glm::mat4(1.0) );
 }
 
 void

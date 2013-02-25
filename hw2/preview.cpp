@@ -4,6 +4,68 @@
 
 #include "scene.h"
 
+using namespace glm;
+
+Scene *scene = NULL;
+
+void
+Object::Render() {
+    glColor3f( 1, 0, 0 );
+}
+
+void
+Tri::Render() {
+    this->Object::Render();
+    vec3 norm = normalize( cross(v1-v0,v2-v1) );
+    glBegin(GL_TRIANGLES);
+    glNormal3fv( &norm.x );
+    glVertex3fv( &v0.x );
+    glVertex3fv( &v1.x );
+    glVertex3fv( &v2.x );
+    glEnd();
+}
+
+void
+Sphere::Render() {
+    this->Object::Render();
+    glPushMatrix();
+    glTranslatef(p.x, p.y, p.z);
+    glutSolidSphere(r, 10, 10);
+    glPopMatrix();
+}
+
+void
+TriNormal::Render() {
+    this->Object::Render();
+    glBegin(GL_TRIANGLES);
+
+    glNormal3fv( &v0.second.x );
+    glVertex3fv( &v0.first.x );
+
+    glNormal3fv( &v1.second.x );
+    glVertex3fv( &v1.first.x );
+
+    glNormal3fv( &v2.second.x );
+    glVertex3fv( &v2.first.x );
+
+    glEnd();
+}
+
+void
+Light::Render() {
+}
+
+void
+Scene::Render() {
+
+    gluLookAt(eye.x, eye.y, eye.z,
+            center.x, center.y, center.z,
+            up.x, up.y, up.z);
+
+    foreach( Object* o, objs )
+        o->Render();
+}
+
 void initGL(void) {
     glClearColor (0.0, 0.0, 0.0, 0.0);
     glEnable(GL_DEPTH_TEST);
@@ -14,22 +76,7 @@ void display(void) {
     glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity ();
 
-    // We will draw things a little deeper into the screen
-    glTranslatef(0,0,-6);
-    // Lets do some rotations here
-    // ypoz gets changed by the animation function and zpoz only by keyboard.
-    // remember you can press 'y' and 'z' to play with these
-    // The angle is in degrees (0..360)
-    glRotatef(0,0,1,0);
-    glRotatef(0,0,0,1);
-
-    // I'm going to draw something simple here as we haven't yet discussed loading models
-    glColor3f(1,0,0);
-    glBegin(GL_TRIANGLES);
-    glVertex3f(0,2,0);
-    glVertex3f(3,0,0);
-    glVertex3f(-3,0,0);
-    glEnd();
+    scene->Render();
 
     glutSwapBuffers();
 }
@@ -62,6 +109,8 @@ Scene::Preview() {
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);
     glutKeyboardFunc(keyboard);
+
+    scene = this;
 
     glutMainLoop();
 }

@@ -2,3 +2,4 @@ trace
 *.o
 *.png
 trace.dSYM
+.*.swp
