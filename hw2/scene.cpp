@@ -133,17 +133,24 @@ Scene::Scene(char *scenefilename) : output_fname("scene.png") {
             xforms.pop_back();
 
         } else if (cmd == "directional") {
-            Light *l = new Light();
+            glm::vec4 pos;
+            glm::vec3 color;
             fscanf(sfile, "%f %f %f %f %f %f",
-                    &l->pos.x, &l->pos.y, &l->pos.z,
-                    &l->color.r, &l->color.g, &l->color.b);
+                    &pos.x, &pos.y, &pos.z,
+                    &color.r, &color.g, &color.b);
+            pos.w = 0.0f; // directional light
+            Light *l = new Light(XF(xforms), material, pos, color );
             lights.push_back(l);
 
         } else if (cmd == "point") {
-            Light *l = new Light();
+            glm::vec4 pos;
+            glm::vec3 color;
             fscanf(sfile, "%f %f %f %f %f %f",
-                    &l->pos.x, &l->pos.y, &l->pos.z,
-                    &l->color.r, &l->color.g, &l->color.b);
+                    &pos.x, &pos.y, &pos.z,
+                    &color.r, &color.g, &color.b);
+            pos.w = 1.0f; // point light
+            Light *l = new Light(XF(xforms), material, pos, color );
+            lights.push_back(l);
 
         } else if (cmd == "attentuation") {
             fscanf(sfile, "%f %f %f",

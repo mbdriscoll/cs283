@@ -29,7 +29,6 @@ class Object {
     Object(glm::mat4 xform, MatSpec &material) :
         xform(xform), material(material)
     {}
-
     virtual void Render();
 
     MatSpec material;
@@ -67,11 +66,16 @@ class TriNormal : public Object {
 static int light_next_num = 0;
 class Light {
   public:
-    Light() : lnum(light_next_num++) {}
+    Light(glm::mat4 xform, MatSpec &material, glm::vec4 pos, glm::vec3 color) :
+        pos(pos), material(material), xform(xform), color(color), lnum(light_next_num++)
+    {}
     void Render();
     void Init();
 
-    glm::vec3 pos, color;
+    MatSpec material;
+    glm::vec3 color;
+    glm::vec4 pos;
+    glm::mat4 xform;
     int lnum;
 };
 

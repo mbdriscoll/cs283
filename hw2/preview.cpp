@@ -61,16 +61,29 @@ Light::Render() {
 
 void
 Light::Init() {
-    glEnable(GL_LIGHT0 + lnum);
+    GLenum n = GL_LIGHT0 + lnum;
+    glEnable(n);
+
+    glLoadMatrixf( (const float *) &xform[0] );
+    glLightfv(n, GL_POSITION, &pos[0]);
+
+    glLightfv(n, GL_AMBIENT, &material.ambient[0]);
+    glLightfv(n, GL_DIFFUSE, &material.diffuse[0]);
+    glLightfv(n, GL_SPECULAR, &material.specular[0]);
+
+
+    glLightf(n, GL_CONSTANT_ATTENUATION,  material.atten[0]);
+    glLightf(n, GL_LINEAR_ATTENUATION,    material.atten[1]);
+    glLightf(n, GL_QUADRATIC_ATTENUATION, material.atten[2]);
 }
 
 void
 Scene::Render() {
-    foreach (Light *light, lights)
+    foreach ( Light *light, lights )
         light->Render();
 
-    foreach( Object* o, objs )
-        o->Render();
+    foreach ( Object* obj, objs )
+        obj->Render();
 }
 
 void initGL(void) {
