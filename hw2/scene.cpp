@@ -19,7 +19,6 @@ Scene::Scene(char *scenefilename) : output_fname("scene.png") {
     char *buf = (char*) malloc(MAX_LINE_LENGTH);
 
     MatSpec mat;
-    LightSpec lightspec;
     std::stack<glm::mat4> xforms;
     xforms.push( glm::mat4(1.0) );
 
@@ -119,25 +118,25 @@ Scene::Scene(char *scenefilename) : output_fname("scene.png") {
             xforms.pop();
 
         } else if (cmd == "directional") {
-            Light *l = new Light(lightspec);
+            Light *l = new Light();
             fscanf(sfile, "%f %f %f %f %f %f",
                     &l->pos.x, &l->pos.y, &l->pos.z,
                     &l->color.r, &l->color.g, &l->color.b);
             lights.push_back(l);
 
         } else if (cmd == "point") {
-            Light *l = new Light(lightspec);
+            Light *l = new Light();
             fscanf(sfile, "%f %f %f %f %f %f",
                     &l->pos.x, &l->pos.y, &l->pos.z,
                     &l->color.r, &l->color.g, &l->color.b);
 
         } else if (cmd == "attentuation") {
             fscanf(sfile, "%f %f %f",
-                    &lightspec.atten.r, &lightspec.atten.g, &lightspec.atten.b);
+                    &mat.atten.r, &mat.atten.g, &mat.atten.b);
 
         } else if (cmd == "ambient") {
             fscanf(sfile, "%f %f %f",
-                    &lightspec.ambient.r, &lightspec.ambient.g, &lightspec.ambient.b);
+                    &mat.ambient.r, &mat.ambient.g, &mat.ambient.b);
 
         } else if (cmd == "diffuse") {
             fscanf(sfile, "%f %f %f", &mat.diffuse.r, &mat.diffuse.g, &mat.diffuse.b);

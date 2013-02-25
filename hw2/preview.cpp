@@ -10,7 +10,7 @@ Scene *scene = NULL;
 
 void
 Object::Render() {
-    glColor3f( 1, 0, 0 );
+    glColor3fv( &mat.ambient.r );
 }
 
 void
@@ -30,7 +30,7 @@ Sphere::Render() {
     this->Object::Render();
     glPushMatrix();
     glTranslatef(p.x, p.y, p.z);
-    glutSolidSphere(r, 10, 10);
+    glutSolidSphere(r, 64, 64);
     glPopMatrix();
 }
 

@@ -15,18 +15,13 @@ typedef std::pair<glm::vec3,glm::vec3> vertnorm;
 
 class MatSpec {
   public:
-    glm::vec3 diffuse, specular, emission;
-    float shininess;
-};
-
-class LightSpec {
-  public:
-    glm::vec3 atten, ambient;
-
-    LightSpec() :
+    MatSpec() :
         ambient( glm::vec3(0.2f, 0.2f, 0.2f) ),
         atten  ( glm::vec3(1.0f, 0.0f, 0.0f) )
     {}
+
+    glm::vec3 atten, ambient, diffuse, specular, emission;
+    float shininess;
 };
 
 class Object {
@@ -66,11 +61,9 @@ class TriNormal : public Object {
 
 class Light {
   public:
-    Light(LightSpec &lspec) : lspec(lspec) {}
     void Render();
 
     glm::vec3 pos, color;
-    LightSpec lspec;
 };
 
 class Scene {
