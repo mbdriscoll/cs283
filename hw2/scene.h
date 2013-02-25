@@ -86,11 +86,11 @@ class Scene {
     void Preview();
     void Render();
 
+    float fov;
+
   private:
     int width, height, maxdepth;
     std::string output_fname;
-
-    float fov;
 
     std::vector<glm::vec3> verts;
     std::vector<vertnorm> vertnorms;
