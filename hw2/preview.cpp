@@ -10,7 +10,12 @@ Scene *scene = NULL;
 
 void
 Object::Render() {
-    glColor3fv( &material.ambient.r );
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, &material.ambient.r);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, &material.diffuse.r);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, &material.specular.r);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, &material.emission.r);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, &material.shininess);
+
     glLoadMatrixf( (const float *) &xform[0] );
 }
 
@@ -51,10 +56,19 @@ TriNormal::Render() {
 
 void
 Light::Render() {
+    printf("render light %d\n", lnum);
+}
+
+void
+Light::Init() {
+    glEnable(GL_LIGHT0 + lnum);
 }
 
 void
 Scene::Render() {
+    foreach (Light *light, lights)
+        light->Render();
+
     foreach( Object* o, objs )
         o->Render();
 }
@@ -63,6 +77,7 @@ void initGL(void) {
     glClearColor (0.0, 0.0, 0.0, 0.0);
     glEnable(GL_DEPTH_TEST);
     glShadeModel (GL_SMOOTH);
+    glEnable(GL_LIGHTING);
 }
 
 void display(void) {
@@ -93,17 +108,21 @@ void keyboard(unsigned char key, int x, int y) {
 
 void
 Scene::Preview() {
+    scene = this;
+
     int argc = 0;
     glutInit(&argc, NULL);
     glutInitDisplayMode (GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE);
     glutInitWindowSize (width, height);
     glutCreateWindow (output_fname.c_str());
+
     initGL();
+    foreach (Light *light, lights)
+        light->Init();
+
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);
     glutKeyboardFunc(keyboard);
-
-    scene = this;
 
     glutMainLoop();
 }

@@ -66,9 +66,13 @@ class TriNormal : public Object {
 
 class Light {
   public:
+    Light() : lnum(next_num++) {}
     void Render();
+    void Init();
 
     glm::vec3 pos, color;
+    int lnum;
+    static int next_num;
 };
 
 class Scene {
