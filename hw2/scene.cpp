@@ -181,7 +181,7 @@ Scene::Scene(char *scenefilename) : output_fname("scene.png") {
 }
 
 glm::vec3
-Scene::CastRay(glm::vec3 origin, glm::vec3 direction) {
+Scene::CastRay(glm::vec3 origin, glm::vec3 target) {
     return glm::vec3(1, 0, 0);
 }
 
@@ -196,18 +196,24 @@ Scene::RayTrace() {
     glm::vec3 vj = dj * glm::normalize( glm::cross(center-eye, up) );
     glm::vec3 vi = di * glm::normalize( up );
 
-    glm::vec3 ur = center + vi + vj,
-              ul = center + vi - vj,
-              lr = center - vi + vj,
-              ll = center - vi - vj;
+    glm::vec3 ur = center + glm::vec3(1.00) * (vi + vj),
+              ul = center + glm::vec3(1.00) * (vi - vj),
+              lr = center + glm::vec3(1.00) * (-vi + vj),
+              ll = center + glm::vec3(1.00) * (-vi - vj);
     float pix_width  = 2.0f * dj / (float) width;
     float pix_height = 2.0f * di / (float) height;
 
-    for (int i = 0; i < height; i++) {
-        for (int j = 0; j < width; j++) {
-            glm::vec3 direction = ul + glm::vec3(i/(float)height + 0.5*pix_height)*(vj*glm::vec3(-2.0f))
-                                     + glm::vec3(j/(float)width  + 0.5*pix_width) *(vi*glm::vec3(-2.0f));
-            buffer[i*width+j] = CastRay(eye, direction);
+    for (int i = 0; i < height; i += 1) {
+        for (int j = 0; j < width; j += 1) {
+            glm::vec3 ulp = ul +
+                glm::vec3(i/(float)height) * (lr-ur) +
+                glm::vec3(j/(float)width ) * (ur-ul);
+            glm::vec3 urp = ulp + pix_width * glm::normalize(vj),
+                      llp = ulp - pix_height * glm::normalize(vi),
+                      lrp = ulp + (urp-ulp) + (llp-ulp);
+            glm::vec3 target = 0.25f * (ulp + urp + llp + lrp);
+
+            buffer[i*width+j] = CastRay(eye, target);
         }
     }
 

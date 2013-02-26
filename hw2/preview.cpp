@@ -74,6 +74,74 @@ void
 Scene::Render() {
     foreach ( Object* obj, objs )
         obj->Render();
+
+    float aspect = width / (float) height;
+    float dj = glm::length(center-eye) * tan(0.5 * fov);
+    float di = dj / aspect;
+    glm::vec3 vj = dj * glm::normalize( glm::cross(center-eye, up) );
+    glm::vec3 vi = di * glm::normalize( up );
+
+    glm::vec3 ur = center + glm::vec3(1.00) * (vi + vj),
+              ul = center + glm::vec3(1.00) * (vi - vj),
+              lr = center + glm::vec3(1.00) * (-vi + vj),
+              ll = center + glm::vec3(1.00) * (-vi - vj);
+    float pix_width  = 2.0f * dj / (float) width;
+    float pix_height = 2.0f * di / (float) height;
+
+    glDisable(GL_LIGHTING);
+    glPolygonMode(GL_FRONT, GL_LINE);
+
+    glLoadIdentity();
+    gluLookAt(eye.x, eye.y, eye.z,
+            center.x, center.y, center.z,
+            up.x, up.y, up.z);
+
+    glBegin(GL_QUADS);
+
+    glColor3f(0,0,1);
+    glVertex3fv(&ur[0]);
+    glVertex3fv(&ul[0]);
+    glVertex3fv(&ll[0]);
+    glVertex3fv(&lr[0]);
+
+    glColor3f(0,0,0.5);
+    for (int i = 0; i < height; i += 1) {
+        for (int j = 0; j < width; j += 1) {
+            glm::vec3 ulp = ul +
+                glm::vec3(i/(float)height) * (lr-ur) +
+                glm::vec3(j/(float)width ) * (ur-ul);
+            glm::vec3 urp = ulp + pix_width * normalize(vj),
+                      llp = ulp - pix_height * normalize(vi),
+                      lrp = ulp + (urp-ulp) + (llp-ulp);
+
+            glVertex3fv(&ulp[0]);
+            glVertex3fv(&llp[0]);
+            glVertex3fv(&lrp[0]);
+            glVertex3fv(&urp[0]);
+        }
+    }
+    glEnd();
+
+    glPointSize(0.1f);
+    glColor3f(1,1,1);
+
+    glBegin(GL_POINTS);
+    for (int i = 0; i < height; i += 1) {
+        for (int j = 0; j < width; j += 1) {
+            glm::vec3 ulp = ul +
+                glm::vec3(i/(float)height) * (lr-ur) +
+                glm::vec3(j/(float)width ) * (ur-ul);
+            glm::vec3 urp = ulp + pix_width * normalize(vj),
+                      llp = ulp - pix_height * normalize(vi),
+                      lrp = ulp + (urp-ulp) + (llp-ulp);
+            glm::vec3 center = 0.25f * (ulp + urp + llp + lrp);
+            glVertex3fv(&center[0]);
+        }
+    }
+    glEnd();
+
+    glEnable(GL_LIGHTING);
+    glPolygonMode(GL_FRONT, GL_FILL);
 }
 
 void initGL(void) {
