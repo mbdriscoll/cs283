@@ -1,4 +1,5 @@
 #include "scene.h"
+#include "image.h"
 
 #include <cstdio>
 #include <cstdlib>
@@ -183,4 +184,14 @@ Scene::Scene(char *scenefilename) : output_fname("scene.png") {
 void
 Scene::RayTrace() {
     printf("raytracing...\n");
+	float *buffer = (float*) malloc(width * height * sizeof(float));
+
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            int r = 1, g = 0, b = 0, a = 1;
+            buffer[i*width+j] = (i-j < 3) ? ((float) (r << 24  | g << 16 | b << 8 | a)) : 0;
+        }
+    }
+
+    writeImage((char*)(output_fname+".png").c_str(), width, height, buffer, (char*)"Image");
 }
