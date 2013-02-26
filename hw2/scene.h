@@ -16,9 +16,9 @@ typedef std::pair<glm::vec3,glm::vec3> vertnorm;
 class MatSpec {
   public:
     MatSpec() :
-        ambient  ( glm::vec4(0.2f, 0.2f, 0.2f, 0.0f) ),
         atten    ( glm::vec4(1.0f, 0.0f, 0.0f, 1.0f) ),
-        diffuse  ( glm::vec4(0,0,0,1) ),
+        ambient  ( glm::vec4(0.2f, 0.2f, 0.2f, 0.0f) ),
+        diffuse  ( glm::vec4(0.2f, 0.2f, 0.2f, 1.0f) ),
         specular ( glm::vec4(0,0,0,1) ),
         emission ( glm::vec4(0,0,0,1) )
     {}

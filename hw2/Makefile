@@ -9,8 +9,8 @@ default: $(TARGET)
 
 $(TARGET): $(OBJECTS)
 
-image.cpp: image.h
-scene.cpp: scene.h
+image.o: image.cpp image.h
+scene.o: scene.cpp scene.h
 
 .PHONY: clean
 clean:

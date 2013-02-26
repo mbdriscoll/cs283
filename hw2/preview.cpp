@@ -12,7 +12,7 @@ void
 Object::Render() {
     glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, &material.ambient[0]);
     glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, &material.ambient[0]);
-    //glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, &material.diffuse[0]);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, &material.diffuse[0]);
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, &material.specular[0]);
     glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, &material.emission[0]);
     glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, &material.shininess);
