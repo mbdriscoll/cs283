@@ -62,7 +62,6 @@ Scene::Scene(char *scenefilename) : output_fname("scene.png") {
             output_fname = string(buf);
 
         } else if (cmd == "camera") {
-            glm::vec3 eye, center, up;
             fscanf(sfile, "%f %f %f %f %f %f %f %f %f %f",
                     &eye.x, &eye.y, &eye.z,
                     &center.x, &center.y, &center.z,
@@ -191,9 +190,24 @@ Scene::RayTrace() {
     printf("raytracing...\n");
     glm::vec3 *buffer = (glm::vec3*) malloc(width * height * sizeof(glm::vec3));
 
+    float aspect = width / (float) height;
+    float dj = glm::length(center-eye) * tan(0.5 * fov);
+    float di = dj / aspect;
+    glm::vec3 vj = dj * glm::normalize( glm::cross(center-eye, up) );
+    glm::vec3 vi = di * glm::normalize( up );
+
+    glm::vec3 ur = center + vi + vj,
+              ul = center + vi - vj,
+              lr = center - vi + vj,
+              ll = center - vi - vj;
+    float pix_width  = 2.0f * dj / (float) width;
+    float pix_height = 2.0f * di / (float) height;
+
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
-            buffer[i*width+j] = glm::vec3(1,1,0);
+            glm::vec3 direction = ul + glm::vec3(i/(float)height + 0.5*pix_height)*(vj*glm::vec3(-2.0f))
+                                     + glm::vec3(j/(float)width  + 0.5*pix_width) *(vi*glm::vec3(-2.0f));
+            buffer[i*width+j] = CastRay(eye, direction);
         }
     }
 

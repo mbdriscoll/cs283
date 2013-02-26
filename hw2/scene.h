@@ -94,6 +94,8 @@ class Scene {
   private:
     std::string output_fname;
 
+    glm::vec3 eye, center, up;
+
     std::vector<glm::vec3> verts;
     std::vector<vertnorm> vertnorms;
 
