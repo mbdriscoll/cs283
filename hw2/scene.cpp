@@ -133,22 +133,18 @@ Scene::Scene(char *scenefilename) : output_fname("scene.png") {
             xforms.pop_back();
 
         } else if (cmd == "directional") {
-            glm::vec4 pos;
-            glm::vec3 color;
+            glm::vec4 pos(0), color(1);
             fscanf(sfile, "%f %f %f %f %f %f",
                     &pos.x, &pos.y, &pos.z,
                     &color.r, &color.g, &color.b);
-            pos.w = 0.0f; // directional light
             Light *l = new Light(XF(xforms), material, pos, color );
             lights.push_back(l);
 
         } else if (cmd == "point") {
-            glm::vec4 pos;
-            glm::vec3 color;
+            glm::vec4 pos(1), color(1);
             fscanf(sfile, "%f %f %f %f %f %f",
                     &pos.x, &pos.y, &pos.z,
                     &color.r, &color.g, &color.b);
-            pos.w = 1.0f; // point light
             Light *l = new Light(XF(xforms), material, pos, color );
             lights.push_back(l);
 
