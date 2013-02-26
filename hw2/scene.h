@@ -86,6 +86,7 @@ class Scene {
     void RayTrace();
     void Preview();
     void Render();
+    glm::vec3 CastRay(glm::vec3 origin, glm::vec3 direction);
 
     float fov;
     int width, height, maxdepth;

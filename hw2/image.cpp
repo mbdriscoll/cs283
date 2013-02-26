@@ -1,6 +1,8 @@
 /**
  * PNG writing code from:
  * http://www.labbookpages.co.uk/software/imgProc/files/libPNG/makePNG.c
+ *
+ * Modifications by Michael Driscoll (mbdriscoll@cs.berkeley.edu).
  */
 
 #include <stdio.h>
@@ -8,25 +10,16 @@
 #include <stdlib.h>
 #include <png.h>
 
-void setRGB(png_byte *ptr, float val)
-{
-	int v = (int)(val * 768);
-	if (v < 0) v = 0;
-	if (v > 768) v = 768;
-	int offset = v % 256;
+#include <glm/gtx/color_cast.hpp>
 
-	if (v<256) {
-		ptr[0] = 0; ptr[1] = 0; ptr[2] = offset;
-	}
-	else if (v<512) {
-		ptr[0] = 0; ptr[1] = offset; ptr[2] = 255-offset;
-	}
-	else {
-		ptr[0] = offset; ptr[1] = 255-offset; ptr[2] = 0;
-	}
+void setRGB(png_byte *ptr, glm::vec3 &val)
+{
+    ptr[0] = 255 * val.r;
+    ptr[1] = 255 * val.g;
+    ptr[2] = 255 * val.b;
 }
 
-int writeImage(char* filename, int width, int height, float *buffer, char* title)
+int writeImage(char* filename, int width, int height, glm::vec3 *buffer, char* title)
 {
 	int code = 0;
 	FILE *fp;

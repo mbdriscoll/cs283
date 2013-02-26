@@ -181,15 +181,19 @@ Scene::Scene(char *scenefilename) : output_fname("scene.png") {
     fclose(sfile);
 }
 
+glm::vec3
+Scene::CastRay(glm::vec3 origin, glm::vec3 direction) {
+    return glm::vec3(1, 0, 0);
+}
+
 void
 Scene::RayTrace() {
     printf("raytracing...\n");
-	float *buffer = (float*) malloc(width * height * sizeof(float));
+    glm::vec3 *buffer = (glm::vec3*) malloc(width * height * sizeof(glm::vec3));
 
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
-            int r = 1, g = 0, b = 0, a = 1;
-            buffer[i*width+j] = (i-j < 3) ? ((float) (r << 24  | g << 16 | b << 8 | a)) : 0;
+            buffer[i*width+j] = glm::vec3(1,1,0);
         }
     }
 
