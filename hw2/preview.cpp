@@ -75,6 +75,9 @@ Scene::Render() {
     foreach ( Object* obj, objs )
         obj->Render();
 
+    if (width > 100 || height > 100)
+        return;
+
     float aspect = width / (float) height;
     float dj = glm::length(center-eye) * tan(0.5 * fov);
     float di = dj / aspect;
@@ -166,7 +169,7 @@ Scene::Preview() {
     int argc = 0;
     glutInit(&argc, NULL);
     glutInitDisplayMode (GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE);
-    glutInitWindowSize (width, height);
+    glutInitWindowSize (1280, (int) 960*width/(float)height);
     glutCreateWindow (output_fname.c_str());
 
     initGL();
